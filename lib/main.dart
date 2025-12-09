@@ -4,6 +4,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/user/user_home_page.dart';
+import 'screens/user/venue_list_page.dart';
 import 'screens/mitra/mitra_home_page.dart';
 import 'screens/admin/admin_home_page.dart';
 // import 'widgets/role_selector_page.dart';
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
           '/register': (context) => const RegisterPage(),
           // '/role-selector': (context) => const RoleSelectorPage(),
           '/user/home': (context) => const UserHomePage(),
+          '/user/venues': (context) => const VenueListPage(),
           '/mitra/home': (context) => const MitraHomePage(),
           '/admin/home': (context) => const AdminHomePage(),
         },
