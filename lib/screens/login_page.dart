@@ -1,5 +1,10 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import '../constants/api_constants.dart';
+import '../models/user.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,14 +15,14 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -28,21 +33,60 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      final request = context.read<CookieRequest>();
 
-      setState(() {
-        _isLoading = false;
-      });
-
-      // TODO: Implement actual login logic
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login successful!'),
-            backgroundColor: Colors.green,
-          ),
+      try {
+        final response = await request.postJson(
+          ApiConstants.loginUrl,
+          jsonEncode({
+            'username': _usernameController.text,
+            'password': _passwordController.text,
+          }),
         );
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          if (response['success'] == true) {
+            // Parse user data
+            final userData = response['user'];
+            User.fromJson(userData);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response['message'] ?? 'Login successful!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            // Navigate based on user role
+            // You can implement different home pages for different roles
+            // For now, we'll just show a success message
+            // TODO: Navigate to appropriate home page
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response['message'] ?? 'Login failed'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -132,117 +176,63 @@ class _LoginPageState extends State<LoginPage> {
         child: Form(
           key: _formKey,
           child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Email Field
-                  _buildInputField(
-                    controller: _emailController,
-                    label: 'Email',
-                    hintText: 'Enter your email',
-                    prefixIcon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Password Field
-                  _buildInputField(
-                    controller: _passwordController,
-                    label: 'Password',
-                    hintText: 'Enter your password',
-                    prefixIcon: Icons.lock_outline,
-                    obscureText: !_isPasswordVisible,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        color: const Color(0xFF5409DA).withOpacity(0.7),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Forgot Password
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        // TODO: Implement forgot password
-                      },
-                      child: const Text(
-                        'Forgot Password?',
-                        style: TextStyle(
-                          color: Color(0xFF5409DA),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Login Button
-                  _buildLoginButton(),
-                  const SizedBox(height: 20),
-
-                  // Divider
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: const Color(0xFF5409DA).withOpacity(0.3),
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR',
-                          style: TextStyle(
-                            color: const Color(0xFF5409DA).withOpacity(0.5),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: const Color(0xFF5409DA).withOpacity(0.3),
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Social Login Buttons
-                  _buildSocialLoginButtons(),
-                ],
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Username Field
+              _buildInputField(
+                controller: _usernameController,
+                label: 'Username',
+                hintText: 'Enter your username',
+                prefixIcon: Icons.person_outline,
+                keyboardType: TextInputType.text,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your username';
+                  }
+                  return null;
+                },
               ),
-            ),
+              const SizedBox(height: 20),
+
+              // Password Field
+              _buildInputField(
+                controller: _passwordController,
+                label: 'Password',
+                hintText: 'Enter your password',
+                prefixIcon: Icons.lock_outline,
+                obscureText: !_isPasswordVisible,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: const Color(0xFF5409DA).withOpacity(0.7),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your password';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              const SizedBox(height: 24),
+
+              // Login Button
+              _buildLoginButton(),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -281,17 +271,24 @@ class _LoginPageState extends State<LoginPage> {
               color: const Color(0xFF5409DA).withOpacity(0.4),
               fontSize: 14,
             ),
-            prefixIcon: Icon(prefixIcon, color: const Color(0xFF5409DA).withOpacity(0.7)),
+            prefixIcon: Icon(
+              prefixIcon,
+              color: const Color(0xFF5409DA).withOpacity(0.7),
+            ),
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: const Color(0xFF5409DA).withOpacity(0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: const Color(0xFF5409DA).withOpacity(0.2)),
+              borderSide: BorderSide(
+                color: const Color(0xFF5409DA).withOpacity(0.2),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: const Color(0xFF5409DA).withOpacity(0.2)),
+              borderSide: BorderSide(
+                color: const Color(0xFF5409DA).withOpacity(0.2),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -350,59 +347,6 @@ class _LoginPageState extends State<LoginPage> {
                   Icon(Icons.arrow_forward, size: 20),
                 ],
               ),
-      ),
-    );
-  }
-
-  Widget _buildSocialLoginButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.g_mobiledata,
-            label: 'Google',
-            onPressed: () {
-              // TODO: Implement Google login
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.apple,
-            label: 'Apple',
-            onPressed: () {
-              // TODO: Implement Apple login
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF5409DA),
-        side: BorderSide(color: const Color(0xFF5409DA).withOpacity(0.3), width: 1.5),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
-        ],
       ),
     );
   }

@@ -1,5 +1,9 @@
 import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import '../constants/api_constants.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -10,19 +14,26 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   bool _agreeToTerms = false;
+  String _selectedRole = 'user';
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _usernameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -44,23 +55,80 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = true;
       });
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      final request = context.read<CookieRequest>();
 
-      setState(() {
-        _isLoading = false;
-      });
-
-      // TODO: Implement actual registration logic
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful!'),
-            backgroundColor: Colors.green,
-          ),
+      try {
+        final response = await request.postJson(
+          ApiConstants.registerUrl,
+          jsonEncode({
+            'username': _usernameController.text,
+            'email': _emailController.text,
+            'first_name': _firstNameController.text,
+            'last_name': _lastNameController.text,
+            'password1': _passwordController.text,
+            'password2': _confirmPasswordController.text,
+            'phone_number': _phoneController.text.isEmpty
+                ? ''
+                : _phoneController.text,
+            'role': _selectedRole,
+          }),
         );
-        // Navigate to login page
-        Navigator.pop(context);
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          if (response['success'] == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  response['message'] ?? 'Registration successful!',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+            // Navigate to login page
+            Navigator.pop(context);
+          } else {
+            // Handle validation errors
+            String errorMessage = response['message'] ?? 'Registration failed';
+
+            if (response['errors'] != null) {
+              final errors = response['errors'] as Map<String, dynamic>;
+              final errorList = <String>[];
+              errors.forEach((key, value) {
+                if (value is List) {
+                  errorList.addAll(value.cast<String>());
+                }
+              });
+              if (errorList.isNotEmpty) {
+                errorMessage = errorList.join('\n');
+              }
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -151,153 +219,162 @@ class _RegisterPageState extends State<RegisterPage> {
         child: Form(
           key: _formKey,
           child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Name Field
-                  _buildInputField(
-                    controller: _nameController,
-                    label: 'Full Name',
-                    hintText: 'Enter your full name',
-                    prefixIcon: Icons.person_outline,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
-                      }
-                      if (value.length < 3) {
-                        return 'Name must be at least 3 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Email Field
-                  _buildInputField(
-                    controller: _emailController,
-                    label: 'Email',
-                    hintText: 'Enter your email',
-                    prefixIcon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Password Field
-                  _buildInputField(
-                    controller: _passwordController,
-                    label: 'Password',
-                    hintText: 'Create a password',
-                    prefixIcon: Icons.lock_outline,
-                    obscureText: !_isPasswordVisible,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        color: const Color(0xFF5409DA).withOpacity(0.7),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Confirm Password Field
-                  _buildInputField(
-                    controller: _confirmPasswordController,
-                    label: 'Confirm Password',
-                    hintText: 'Re-enter your password',
-                    prefixIcon: Icons.lock_outline,
-                    obscureText: !_isConfirmPasswordVisible,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isConfirmPasswordVisible
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                        color: const Color(0xFF5409DA).withOpacity(0.7),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isConfirmPasswordVisible =
-                              !_isConfirmPasswordVisible;
-                        });
-                      },
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Terms and Conditions Checkbox
-                  _buildTermsCheckbox(),
-                  const SizedBox(height: 24),
-
-                  // Register Button
-                  _buildRegisterButton(),
-                  const SizedBox(height: 20),
-
-                  // Divider
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: const Color(0xFF5409DA).withOpacity(0.3),
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR',
-                          style: TextStyle(
-                            color: const Color(0xFF5409DA).withOpacity(0.5),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: const Color(0xFF5409DA).withOpacity(0.3),
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Social Signup Buttons
-                  _buildSocialSignupButtons(),
-                ],
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Username Field
+              _buildInputField(
+                controller: _usernameController,
+                label: 'Username',
+                hintText: 'Enter your username',
+                prefixIcon: Icons.person_outline,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your username';
+                  }
+                  if (value.length < 3) {
+                    return 'Username must be at least 3 characters';
+                  }
+                  return null;
+                },
               ),
-            ),
+              const SizedBox(height: 20),
+
+              // First Name Field
+              _buildInputField(
+                controller: _firstNameController,
+                label: 'First Name',
+                hintText: 'Enter your first name',
+                prefixIcon: Icons.badge_outlined,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your first name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Last Name Field
+              _buildInputField(
+                controller: _lastNameController,
+                label: 'Last Name',
+                hintText: 'Enter your last name',
+                prefixIcon: Icons.badge_outlined,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your last name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Email Field
+              _buildInputField(
+                controller: _emailController,
+                label: 'Email',
+                hintText: 'Enter your email',
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Password Field
+              _buildInputField(
+                controller: _passwordController,
+                label: 'Password',
+                hintText: 'Create a password',
+                prefixIcon: Icons.lock_outline,
+                obscureText: !_isPasswordVisible,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: const Color(0xFF5409DA).withOpacity(0.7),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a password';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Confirm Password Field
+              _buildInputField(
+                controller: _confirmPasswordController,
+                label: 'Confirm Password',
+                hintText: 'Re-enter your password',
+                prefixIcon: Icons.lock_outline,
+                obscureText: !_isConfirmPasswordVisible,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isConfirmPasswordVisible
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: const Color(0xFF5409DA).withOpacity(0.7),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                    });
+                  },
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Phone Number Field (Optional)
+              _buildInputField(
+                controller: _phoneController,
+                label: 'Phone Number (Optional)',
+                hintText: 'Enter your phone number',
+                prefixIcon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 20),
+
+              // Role Selection
+              _buildRoleSelector(),
+              const SizedBox(height: 20),
+
+              // Terms and Conditions Checkbox
+              _buildTermsCheckbox(),
+              const SizedBox(height: 24),
+
+              // Register Button
+              _buildRegisterButton(),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -336,17 +413,24 @@ class _RegisterPageState extends State<RegisterPage> {
               color: const Color(0xFF5409DA).withOpacity(0.4),
               fontSize: 14,
             ),
-            prefixIcon: Icon(prefixIcon, color: const Color(0xFF5409DA).withOpacity(0.7)),
+            prefixIcon: Icon(
+              prefixIcon,
+              color: const Color(0xFF5409DA).withOpacity(0.7),
+            ),
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: const Color(0xFF5409DA).withOpacity(0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: const Color(0xFF5409DA).withOpacity(0.2)),
+              borderSide: BorderSide(
+                color: const Color(0xFF5409DA).withOpacity(0.2),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(color: const Color(0xFF5409DA).withOpacity(0.2)),
+              borderSide: BorderSide(
+                color: const Color(0xFF5409DA).withOpacity(0.2),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -371,6 +455,56 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  Widget _buildRoleSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Account Type',
+          style: TextStyle(
+            color: Color(0xFF5409DA),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF5409DA).withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF5409DA).withOpacity(0.2)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedRole,
+              isExpanded: true,
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: const Color(0xFF5409DA).withOpacity(0.7),
+              ),
+              style: const TextStyle(color: Color(0xFF5409DA), fontSize: 14),
+              items: const [
+                DropdownMenuItem(value: 'user', child: Text('User/Penyewa')),
+                DropdownMenuItem(
+                  value: 'mitra',
+                  child: Text('Mitra/Pemilik Lapangan'),
+                ),
+              ],
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _selectedRole = newValue;
+                  });
+                }
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTermsCheckbox() {
     return Row(
       children: [
@@ -384,7 +518,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 _agreeToTerms = value ?? false;
               });
             },
-            side: BorderSide(color: const Color(0xFF5409DA).withOpacity(0.5), width: 2),
+            side: BorderSide(
+              color: const Color(0xFF5409DA).withOpacity(0.5),
+              width: 2,
+            ),
             fillColor: MaterialStateProperty.resolveWith<Color>((
               Set<MaterialState> states,
             ) {
@@ -486,59 +623,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   Icon(Icons.arrow_forward, size: 20),
                 ],
               ),
-      ),
-    );
-  }
-
-  Widget _buildSocialSignupButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.g_mobiledata,
-            label: 'Google',
-            onPressed: () {
-              // TODO: Implement Google signup
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.apple,
-            label: 'Apple',
-            onPressed: () {
-              // TODO: Implement Apple signup
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF5409DA),
-        side: BorderSide(color: const Color(0xFF5409DA).withOpacity(0.3), width: 1.5),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
-        ],
       ),
     );
   }

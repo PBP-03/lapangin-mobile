@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 
@@ -11,23 +13,29 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'LapangIN',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF5409DA),
-          primary: const Color(0xFF5409DA),
-          secondary: const Color(0xFF4E71FF),
-        ),
-        useMaterial3: true,
-        fontFamily: 'Inter',
-      ),
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
+    return Provider(
+      create: (_) {
+        CookieRequest request = CookieRequest();
+        return request;
       },
+      child: MaterialApp(
+        title: 'LapangIN',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF5409DA),
+            primary: const Color(0xFF5409DA),
+            secondary: const Color(0xFF4E71FF),
+          ),
+          useMaterial3: true,
+          fontFamily: 'Inter',
+        ),
+        initialRoute: '/login',
+        routes: {
+          '/login': (context) => const LoginPage(),
+          '/register': (context) => const RegisterPage(),
+        },
+      ),
     );
   }
 }
