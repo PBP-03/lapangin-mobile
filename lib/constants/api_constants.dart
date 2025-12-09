@@ -6,7 +6,7 @@ class ApiConstants {
   // - Physical device: 'http://YOUR_LOCAL_IP:8000' (e.g., 'http://192.168.1.100:8000')
   // For production: 'https://your-domain.com'
 
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'https://muhammad-fauzan44-lapangin.pbp.cs.ui.ac.id';
 
   // API Endpoints
   static const String loginUrl = '$baseUrl/api/login/';
