@@ -1,10 +1,10 @@
 import 'dart:ui';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import '../constants/api_constants.dart';
 import '../models/user.dart';
+import '../providers/user_provider.dart';
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -34,14 +34,13 @@ class _LoginPageState extends State<LoginPage> {
       });
 
       final request = context.read<CookieRequest>();
+      final userProvider = context.read<UserProvider>();
+      final authService = AuthService(request);
 
       try {
-        final response = await request.postJson(
-          ApiConstants.loginUrl,
-          jsonEncode({
-            'username': _usernameController.text,
-            'password': _passwordController.text,
-          }),
+        final result = await authService.login(
+          _usernameController.text,
+          _passwordController.text,
         );
 
         setState(() {
@@ -49,26 +48,34 @@ class _LoginPageState extends State<LoginPage> {
         });
 
         if (mounted) {
-          if (response['success'] == true) {
-            // Parse user data
-            final userData = response['user'];
-            User.fromJson(userData);
+          if (result['success'] == true) {
+            // Store user data in provider
+            final user = result['user'] as User;
+            userProvider.setUser(user);
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(response['message'] ?? 'Login successful!'),
+                content: Text(result['message'] ?? 'Login successful!'),
                 backgroundColor: Colors.green,
               ),
             );
 
-            // Navigate based on user role
-            // You can implement different home pages for different roles
-            // For now, we'll just show a success message
-            // TODO: Navigate to appropriate home page
+            // Navigate to role selector (temporary for development)
+            // In production, you would navigate directly based on role:
+            // if (user.role == 'user') {
+            //   Navigator.pushReplacementNamed(context, '/user/home');
+            // } else if (user.role == 'mitra') {
+            //   Navigator.pushReplacementNamed(context, '/mitra/home');
+            // } else if (user.role == 'admin') {
+            //   Navigator.pushReplacementNamed(context, '/admin/home');
+            // }
+
+            // For now, navigate to role selector for testing
+            Navigator.pushReplacementNamed(context, '/role-selector');
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(response['message'] ?? 'Login failed'),
+                content: Text(result['message'] ?? 'Login failed'),
                 backgroundColor: Colors.red,
               ),
             );
