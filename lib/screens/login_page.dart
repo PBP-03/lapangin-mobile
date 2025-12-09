@@ -60,18 +60,17 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
 
-            // Navigate to role selector (temporary for development)
-            // In production, you would navigate directly based on role:
-            // if (user.role == 'user') {
-            //   Navigator.pushReplacementNamed(context, '/user/home');
-            // } else if (user.role == 'mitra') {
-            //   Navigator.pushReplacementNamed(context, '/mitra/home');
-            // } else if (user.role == 'admin') {
-            //   Navigator.pushReplacementNamed(context, '/admin/home');
-            // }
-
-            // For now, navigate to role selector for testing
-            Navigator.pushReplacementNamed(context, '/role-selector');
+            // Navigate directly based on user role
+            if (user.role == 'user') {
+              Navigator.pushReplacementNamed(context, '/user/home');
+            } else if (user.role == 'mitra') {
+              Navigator.pushReplacementNamed(context, '/mitra/home');
+            } else if (user.role == 'admin') {
+              Navigator.pushReplacementNamed(context, '/admin/home');
+            } else {
+              // Fallback for unknown roles
+              Navigator.pushReplacementNamed(context, '/login');
+            }
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
