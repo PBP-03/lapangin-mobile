@@ -4,9 +4,6 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../../providers/user_provider.dart';
 import '../../constants/api_constants.dart';
 import 'venues_page.dart';
-import 'lapangan_page.dart';
-import 'bookings_page.dart';
-import 'pendapatan_page.dart';
 
 class MitraHomePage extends StatefulWidget {
   const MitraHomePage({super.key});
