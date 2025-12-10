@@ -113,6 +113,7 @@ class _LapanganPageState extends State<LapanganPage> {
                 'venue': court['venue_name'],
                 'category': court['category'] ?? 'Other',
                 'price': priceValue,
+                'price_per_hour': court['price_per_hour'],
                 'status': court['is_active'] ? 'active' : 'inactive',
                 'image': court['images'].isNotEmpty
                     ? court['images'][0]['url']
@@ -521,7 +522,11 @@ class _LapanganPageState extends State<LapanganPage> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => _showCourtSessionsDialog(lapangan),
+                        onPressed: () async {
+                          await _showCourtSessionsDialog(lapangan);
+                          // Reload courts after dialog closes (in case price was updated)
+                          _loadLapangan();
+                        },
                         icon: const Icon(Icons.schedule, size: 18),
                         label: const Text('Jadwal'),
                         style: OutlinedButton.styleFrom(
@@ -657,6 +662,13 @@ class _LapanganPageState extends State<LapanganPage> {
         sessions = (response['data'] as List)
             .map((session) => Map<String, dynamic>.from(session))
             .toList();
+        print('Initial sessions loaded: $sessions');
+        print('Court price_per_hour: ${court['price_per_hour']}');
+        print('Court object keys: ${court.keys}');
+        if (sessions.isNotEmpty) {
+          print('First session price: ${sessions[0]['price']}');
+          print('First session keys: ${sessions[0].keys}');
+        }
       }
     } catch (e) {
       print('Error loading sessions: $e');
@@ -895,7 +907,7 @@ class _LapanganPageState extends State<LapanganPage> {
                                           ),
                                         ),
                                         subtitle: Text(
-                                          'Rp ${_formatCurrency(session['price'])}/jam',
+                                          'Rp ${_formatCurrency(session['price'] ?? court['price_per_hour'] ?? 0)}/jam',
                                           style: const TextStyle(
                                             color: Color(0xFF5409DA),
                                             fontWeight: FontWeight.w600,
@@ -916,7 +928,7 @@ class _LapanganPageState extends State<LapanganPage> {
                                                   court['id'],
                                                   session,
                                                 );
-                                                // Reload
+                                                // Reload sessions after edit
                                                 try {
                                                   final response = await request
                                                       .get(
@@ -924,6 +936,9 @@ class _LapanganPageState extends State<LapanganPage> {
                                                       );
                                                   if (response['success'] ==
                                                       true) {
+                                                    print(
+                                                      'Sessions after edit reload: ${response['data']}',
+                                                    );
                                                     setDialogState(() {
                                                       sessions =
                                                           (response['data']
@@ -939,7 +954,9 @@ class _LapanganPageState extends State<LapanganPage> {
                                                     });
                                                   }
                                                 } catch (e) {
-                                                  print('Error: $e');
+                                                  print(
+                                                    'Error reloading after edit: $e',
+                                                  );
                                                 }
                                               },
                                             ),
@@ -1109,9 +1126,9 @@ class _LapanganPageState extends State<LapanganPage> {
                     'price': priceController.text,
                   };
 
-                  final response = await request.post(
+                  final response = await request.postJson(
                     '${ApiConstants.baseUrl}/api/courts/$courtId/sessions/',
-                    formData,
+                    jsonEncode(formData),
                   );
 
                   if (response['success'] == true) {
@@ -1244,9 +1261,9 @@ class _LapanganPageState extends State<LapanganPage> {
                     'price': priceController.text,
                   };
 
-                  final response = await request.post(
+                  final response = await request.postJson(
                     '${ApiConstants.baseUrl}/api/courts/$courtId/sessions/${session['id']}/',
-                    formData,
+                    jsonEncode(formData),
                   );
 
                   if (response['success'] == true) {
@@ -1314,9 +1331,9 @@ class _LapanganPageState extends State<LapanganPage> {
           parentContext,
           listen: false,
         );
-        final response = await request.post(
+        final response = await request.postJson(
           '${ApiConstants.baseUrl}/api/courts/$courtId/sessions/$sessionId/',
-          {'_method': 'DELETE'},
+          jsonEncode({'_method': 'DELETE'}),
         );
 
         if (response['success'] == true) {
@@ -1338,7 +1355,16 @@ class _LapanganPageState extends State<LapanganPage> {
   }
 
   String _formatCurrency(dynamic value) {
-    final number = value is int ? value : (value is double ? value.toInt() : 0);
+    int number;
+    if (value is int) {
+      number = value;
+    } else if (value is double) {
+      number = value.toInt();
+    } else if (value is String) {
+      number = double.tryParse(value)?.toInt() ?? 0;
+    } else {
+      number = 0;
+    }
     return number.toString().replaceAllMapped(
       RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
       (Match m) => '${m[1]}.',

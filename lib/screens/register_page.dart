@@ -1,6 +1,9 @@
+﻿import 'dart:ui';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
+import '../constants/api_constants.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -15,14 +18,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _phoneController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
   bool _agreeToTerms = false;
-  String _selectedRole = 'user'; // 'user' or 'mitra'
+  String _selectedRole = 'user';
 
   @override
   void dispose() {
@@ -30,9 +33,9 @@ class _RegisterPageState extends State<RegisterPage> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -52,45 +55,77 @@ class _RegisterPageState extends State<RegisterPage> {
         _isLoading = true;
       });
 
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final success = await userProvider.register(
-        username: _usernameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        password2: _confirmPasswordController.text,
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        role: _selectedRole,
-        phoneNumber: _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
-      );
+      final request = context.read<CookieRequest>();
 
-      setState(() {
-        _isLoading = false;
-      });
+      try {
+        final response = await request.postJson(
+          ApiConstants.registerUrl,
+          jsonEncode({
+            'username': _usernameController.text,
+            'email': _emailController.text,
+            'first_name': _firstNameController.text,
+            'last_name': _lastNameController.text,
+            'password1': _passwordController.text,
+            'password2': _confirmPasswordController.text,
+            'phone_number': _phoneController.text.isEmpty
+                ? ''
+                : _phoneController.text,
+            'role': _selectedRole,
+          }),
+        );
 
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration successful! Welcome to LapangIN!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Navigate to home after successful registration
-          Navigator.pushReplacementNamed(context, '/home');
-        } else {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          if (response['success'] == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  response['message'] ?? 'Registration successful!',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+            // Navigate to login page
+            Navigator.pop(context);
+          } else {
+            // Handle validation errors
+            String errorMessage = response['message'] ?? 'Registration failed';
+
+            if (response['errors'] != null) {
+              final errors = response['errors'] as Map<String, dynamic>;
+              final errorList = <String>[];
+              errors.forEach((key, value) {
+                if (value is List) {
+                  errorList.addAll(value.cast<String>());
+                }
+              });
+              if (errorList.isNotEmpty) {
+                errorMessage = errorList.join('\n');
+              }
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(userProvider.error ?? 'Registration failed'),
+              content: Text('Error: ${e.toString()}'),
               backgroundColor: Colors.red,
-              duration: const Duration(seconds: 5),
-              action: SnackBarAction(
-                label: 'OK',
-                textColor: Colors.white,
-                onPressed: () {},
-              ),
             ),
           );
         }
@@ -190,11 +225,11 @@ class _RegisterPageState extends State<RegisterPage> {
               _buildInputField(
                 controller: _usernameController,
                 label: 'Username',
-                hintText: 'Choose a username',
+                hintText: 'Enter your username',
                 prefixIcon: Icons.person_outline,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a username';
+                    return 'Please enter your username';
                   }
                   if (value.length < 3) {
                     return 'Username must be at least 3 characters';
@@ -209,7 +244,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: _firstNameController,
                 label: 'First Name',
                 hintText: 'Enter your first name',
-                prefixIcon: Icons.person,
+                prefixIcon: Icons.badge_outlined,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your first name';
@@ -224,7 +259,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: _lastNameController,
                 label: 'Last Name',
                 hintText: 'Enter your last name',
-                prefixIcon: Icons.person,
+                prefixIcon: Icons.badge_outlined,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your last name';
@@ -322,13 +357,13 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: _phoneController,
                 label: 'Phone Number (Optional)',
                 hintText: 'Enter your phone number',
-                prefixIcon: Icons.phone,
+                prefixIcon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 20),
 
               // Role Selection
-              _buildRoleSelection(),
+              _buildRoleSelector(),
               const SizedBox(height: 20),
 
               // Terms and Conditions Checkbox
@@ -337,40 +372,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
               // Register Button
               _buildRegisterButton(),
-              const SizedBox(height: 20),
-
-              // Divider
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: const Color(0xFF5409DA).withOpacity(0.3),
-                      thickness: 1,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'OR',
-                      style: TextStyle(
-                        color: const Color(0xFF5409DA).withOpacity(0.5),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: const Color(0xFF5409DA).withOpacity(0.3),
-                      thickness: 1,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Social Signup Buttons
-              _buildSocialSignupButtons(),
             ],
           ),
         ),
@@ -454,123 +455,51 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildRoleSelection() {
+  Widget _buildRoleSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Register as',
+          'Account Type',
           style: TextStyle(
             color: Color(0xFF5409DA),
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedRole = 'user';
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _selectedRole == 'user'
-                        ? const Color(0xFF5409DA).withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.05),
-                    border: Border.all(
-                      color: _selectedRole == 'user'
-                          ? const Color(0xFF5409DA)
-                          : Colors.grey.withOpacity(0.3),
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.person,
-                        color: _selectedRole == 'user'
-                            ? const Color(0xFF5409DA)
-                            : Colors.grey,
-                        size: 32,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'User',
-                        style: TextStyle(
-                          color: _selectedRole == 'user'
-                              ? const Color(0xFF5409DA)
-                              : Colors.grey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Book venues',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF5409DA).withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF5409DA).withOpacity(0.2)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedRole,
+              isExpanded: true,
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: const Color(0xFF5409DA).withOpacity(0.7),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedRole = 'mitra';
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _selectedRole == 'mitra'
-                        ? const Color(0xFF5409DA).withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.05),
-                    border: Border.all(
-                      color: _selectedRole == 'mitra'
-                          ? const Color(0xFF5409DA)
-                          : Colors.grey.withOpacity(0.3),
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.store,
-                        color: _selectedRole == 'mitra'
-                            ? const Color(0xFF5409DA)
-                            : Colors.grey,
-                        size: 32,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Mitra',
-                        style: TextStyle(
-                          color: _selectedRole == 'mitra'
-                              ? const Color(0xFF5409DA)
-                              : Colors.grey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Manage venues',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ),
+              style: const TextStyle(color: Color(0xFF5409DA), fontSize: 14),
+              items: const [
+                DropdownMenuItem(value: 'user', child: Text('User/Penyewa')),
+                DropdownMenuItem(
+                  value: 'mitra',
+                  child: Text('Mitra/Pemilik Lapangan'),
                 ),
-              ),
+              ],
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _selectedRole = newValue;
+                  });
+                }
+              },
             ),
-          ],
+          ),
         ),
       ],
     );
@@ -593,10 +522,10 @@ class _RegisterPageState extends State<RegisterPage> {
               color: const Color(0xFF5409DA).withOpacity(0.5),
               width: 2,
             ),
-            fillColor: WidgetStateProperty.resolveWith<Color>((
-              Set<WidgetState> states,
+            fillColor: MaterialStateProperty.resolveWith<Color>((
+              Set<MaterialState> states,
             ) {
-              if (states.contains(WidgetState.selected)) {
+              if (states.contains(MaterialState.selected)) {
                 return Colors.white;
               }
               return Colors.transparent;
@@ -694,62 +623,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   Icon(Icons.arrow_forward, size: 20),
                 ],
               ),
-      ),
-    );
-  }
-
-  Widget _buildSocialSignupButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.g_mobiledata,
-            label: 'Google',
-            onPressed: () {
-              // TODO: Implement Google signup
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.apple,
-            label: 'Apple',
-            onPressed: () {
-              // TODO: Implement Apple signup
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF5409DA),
-        side: BorderSide(
-          color: const Color(0xFF5409DA).withOpacity(0.3),
-          width: 1.5,
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
-        ],
       ),
     );
   }

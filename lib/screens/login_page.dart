@@ -1,6 +1,10 @@
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import '../models/user_model.dart';
 import '../providers/user_provider.dart';
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -29,39 +33,62 @@ class _LoginPageState extends State<LoginPage> {
         _isLoading = true;
       });
 
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final success = await userProvider.login(
-        _usernameController.text.trim(),
-        _passwordController.text,
-      );
+      final request = context.read<CookieRequest>();
+      final userProvider = context.read<UserProvider>();
+      final authService = AuthService(request);
 
-      setState(() {
-        _isLoading = false;
-      });
+      try {
+        final result = await authService.login(
+          _usernameController.text,
+          _passwordController.text,
+        );
 
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Welcome, ${userProvider.user?.fullName ?? "User"}!',
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          if (result['success'] == true) {
+            // Store user data in provider
+            final user = result['user'] as User;
+            userProvider.setUser(user);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message'] ?? 'Login successful!'),
+                backgroundColor: Colors.green,
               ),
-              backgroundColor: Colors.green,
-            ),
-          );
+            );
 
-          // Navigate based on role
-          if (userProvider.isAdmin) {
-            Navigator.pushReplacementNamed(context, '/admin-dashboard');
-          } else if (userProvider.isMitra) {
-            Navigator.pushReplacementNamed(context, '/mitra-dashboard');
+            // Navigate directly based on user role
+            if (user.role == 'user') {
+              Navigator.pushReplacementNamed(context, '/user/home');
+            } else if (user.role == 'mitra') {
+              Navigator.pushReplacementNamed(context, '/mitra/home');
+            } else if (user.role == 'admin') {
+              Navigator.pushReplacementNamed(context, '/admin/home');
+            } else {
+              // Fallback for unknown roles
+              Navigator.pushReplacementNamed(context, '/login');
+            }
           } else {
-            Navigator.pushReplacementNamed(context, '/home');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message'] ?? 'Login failed'),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
-        } else {
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(userProvider.error ?? 'Login failed'),
+              content: Text('Error: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -163,6 +190,7 @@ class _LoginPageState extends State<LoginPage> {
                 label: 'Username',
                 hintText: 'Enter your username',
                 prefixIcon: Icons.person_outline,
+                keyboardType: TextInputType.text,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your username';
@@ -203,62 +231,11 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 12),
-
-              // Forgot Password
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // TODO: Implement forgot password
-                  },
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(
-                      color: Color(0xFF5409DA),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
               const SizedBox(height: 24),
 
               // Login Button
               _buildLoginButton(),
               const SizedBox(height: 20),
-
-              // Divider
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(
-                      color: const Color(0xFF5409DA).withOpacity(0.3),
-                      thickness: 1,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'OR',
-                      style: TextStyle(
-                        color: const Color(0xFF5409DA).withOpacity(0.5),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      color: const Color(0xFF5409DA).withOpacity(0.3),
-                      thickness: 1,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Social Login Buttons
-              _buildSocialLoginButtons(),
             ],
           ),
         ),
@@ -376,62 +353,6 @@ class _LoginPageState extends State<LoginPage> {
                   Icon(Icons.arrow_forward, size: 20),
                 ],
               ),
-      ),
-    );
-  }
-
-  Widget _buildSocialLoginButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.g_mobiledata,
-            label: 'Google',
-            onPressed: () {
-              // TODO: Implement Google login
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildSocialButton(
-            icon: Icons.apple,
-            label: 'Apple',
-            onPressed: () {
-              // TODO: Implement Apple login
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFF5409DA),
-        side: BorderSide(
-          color: const Color(0xFF5409DA).withOpacity(0.3),
-          width: 1.5,
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
-        ],
       ),
     );
   }
