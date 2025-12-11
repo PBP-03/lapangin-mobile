@@ -4,11 +4,9 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'providers/user_provider.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
-// import 'screens/home_page.dart'; // TODO: Re-add when merging branches
-// import 'screens/profile_page.dart'; // TODO: Re-add when merging branches
-// import 'screens/booking_history_page.dart'; // TODO: Re-add when merging branches
-// import 'screens/admin_dashboard_page.dart'; // TODO: Re-add when merging branches
+import 'screens/user/user_home_page.dart';
 import 'screens/mitra/mitra_home_page.dart';
+import 'screens/admin/admin_home_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -45,15 +43,9 @@ class MyApp extends StatelessWidget {
         routes: {
           '/login': (context) => const LoginPage(),
           '/register': (context) => const RegisterPage(),
-          // '/home': (context) => const HomePage(), // TODO: Re-add when merging branches
-          // '/user/home': (context) => const HomePage(), // TODO: Re-add when merging branches
-          '/mitra/home': (context) =>
-              const MitraHomePage(), // Original route from main branch
-          '/mitra-dashboard': (context) =>
-              const MitraHomePage(), // Alias for convenience
-          // '/admin/home': (context) => const AdminDashboardPage(), // TODO: Re-add when merging branches
-          // '/profile': (context) => const ProfilePage(), // TODO: Re-add when merging branches
-          // '/booking-history': (context) => const BookingHistoryPage(), // TODO: Re-add when merging branches
+          '/user/home': (context) => const UserHomePage(),
+          '/mitra/home': (context) => const MitraHomePage(),
+          '/admin/home': (context) => const AdminHomePage(),
         },
       ),
     );

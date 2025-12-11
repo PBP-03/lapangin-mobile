@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../constants/api_constants.dart';
 import '../models/user_model.dart';
