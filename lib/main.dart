@@ -6,6 +6,7 @@ import 'screens/register_page.dart';
 import 'screens/user/user_home_page.dart';
 import 'screens/mitra/mitra_home_page.dart';
 import 'screens/admin/admin_home_page.dart';
+import 'screens/admin/admin_mitra_list_page.dart';
 // import 'widgets/role_selector_page.dart';
 import 'providers/user_provider.dart';
 
@@ -48,6 +49,7 @@ class MyApp extends StatelessWidget {
           '/user/home': (context) => const UserHomePage(),
           '/mitra/home': (context) => const MitraHomePage(),
           '/admin/home': (context) => const AdminHomePage(),
+          '/admin/kelola-pengguna': (context) => const AdminMitraListPage(),
         },
       ),
     );

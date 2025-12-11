@@ -289,16 +289,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
         const SizedBox(height: 12),
         _buildActionCard(
           'Kelola Pengguna',
-          'Lihat dan kelola user',
+          'Kelola user dan mitra',
           Icons.people,
           Colors.blue,
           () {
-            // TODO: Navigate to user management
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Fitur kelola pengguna segera hadir'),
-              ),
-            );
+            Navigator.pushNamed(context, '/admin/kelola-pengguna');
           },
         ),
         const SizedBox(height: 12),
