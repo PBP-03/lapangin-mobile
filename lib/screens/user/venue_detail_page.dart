@@ -112,6 +112,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
@@ -125,8 +126,8 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildImageGallery(),
-                      _buildVenueInfo(),
+                      _buildHeroSection(),
+                      _buildVenueCard(),
                       if (venueDetail!.facilities.isNotEmpty)
                         _buildFacilities(),
                       _buildCourts(),
@@ -160,195 +161,409 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 0,
       pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          venueDetail?.name ?? '',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            shadows: [Shadow(color: Colors.black45, blurRadius: 10)],
-          ),
+      backgroundColor: Colors.white,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        onPressed: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+  Widget _buildHeroSection() {
+    return Container(
+      height: 140,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFF9FAFB), Color(0xFFEDE9FE), Color(0xFFDCFCE7)],
         ),
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Theme.of(context).colorScheme.primary,
-                Theme.of(context).colorScheme.secondary,
-              ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF14B8A6).withOpacity(0.2),
+                    const Color(0xFF14B8A6).withOpacity(0.05),
+                  ],
+                ),
+              ),
             ),
           ),
+          Positioned(
+            bottom: -100,
+            left: -100,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF5409DA).withOpacity(0.2),
+                    const Color(0xFF5409DA).withOpacity(0.05),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVenueCard() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      transform: Matrix4.translationValues(0, -10, 0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [_buildImageGallery(), _buildVenueInfo()],
         ),
       ),
     );
   }
 
   Widget _buildImageGallery() {
-    if (venueDetail!.images.isEmpty) {
-      return Container(
-        height: 300,
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[300],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Center(
-          child: Icon(Icons.stadium, size: 80, color: Colors.grey),
-        ),
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Dynamic height based on screen width
+        final imageHeight = constraints.maxWidth < 400
+            ? 220.0
+            : constraints.maxWidth < 600
+            ? 280.0
+            : 350.0;
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // Main Image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              venueDetail!.images[selectedImageIndex],
-              height: 300,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 300,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.stadium, size: 80),
-                );
-              },
+        if (venueDetail!.images.isEmpty) {
+          return Container(
+            height: imageHeight,
+            decoration: BoxDecoration(color: Colors.grey[300]),
+            child: Center(
+              child: Icon(
+                Icons.stadium,
+                size: constraints.maxWidth < 400 ? 60 : 80,
+                color: Colors.grey,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          // Thumbnail Gallery
-          SizedBox(
-            height: 80,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: venueDetail!.images.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
+          );
+        }
+
+        return Column(
+          children: [
+            // Main Image with Stack for navigation
+            Stack(
+              children: [
+                GestureDetector(
                   onTap: () {
-                    setState(() {
-                      selectedImageIndex = index;
-                    });
+                    if (venueDetail!.images.length > 1) {
+                      setState(() {
+                        selectedImageIndex =
+                            (selectedImageIndex + 1) %
+                            venueDetail!.images.length;
+                      });
+                    }
                   },
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: selectedImageIndex == index
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.transparent,
-                        width: 3,
+                  child: Image.network(
+                    venueDetail!.images[selectedImageIndex],
+                    height: imageHeight,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: imageHeight,
+                        color: Colors.grey[300],
+                        child: Icon(
+                          Icons.stadium,
+                          size: constraints.maxWidth < 400 ? 60 : 80,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                // Navigation arrows for multiple images
+                if (venueDetail!.images.length > 1) ...[
+                  // Left arrow
+                  Positioned(
+                    left: 12,
+                    top: imageHeight / 2 - 20,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        venueDetail!.images[index],
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            color: Colors.grey[300],
-                            child: const Icon(Icons.image, size: 30),
-                          );
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.chevron_left,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            selectedImageIndex =
+                                (selectedImageIndex -
+                                    1 +
+                                    venueDetail!.images.length) %
+                                venueDetail!.images.length;
+                          });
                         },
                       ),
                     ),
                   ),
-                );
-              },
+                  // Right arrow
+                  Positioned(
+                    right: 12,
+                    top: imageHeight / 2 - 20,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            selectedImageIndex =
+                                (selectedImageIndex + 1) %
+                                venueDetail!.images.length;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  // Image counter
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${selectedImageIndex + 1}/${venueDetail!.images.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ),
-        ],
-      ),
+            // Thumbnail Gallery
+            if (venueDetail!.images.length > 1)
+              Container(
+                padding: const EdgeInsets.all(12),
+                color: const Color(0xFFF9FAFB),
+                child: SizedBox(
+                  height: 80,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: venueDetail!.images.length,
+                    itemBuilder: (context, index) {
+                      final isSelected = selectedImageIndex == index;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedImageIndex = index;
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 10),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : const Color(0xFFE5E7EB),
+                              width: isSelected ? 3 : 2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              venueDetail!.images[index],
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 80,
+                                  height: 80,
+                                  color: Colors.grey[300],
+                                  child: const Icon(Icons.image, size: 30),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildVenueInfo() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title
+          Text(
+            venueDetail!.name,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF111827),
+              height: 1.3,
+              letterSpacing: -0.5,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 16),
+
           // Rating
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.amber,
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF59E0B).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.star, size: 16, color: Colors.white),
-                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.star_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 6),
                     Text(
                       venueDetail!.avgRating.toStringAsFixed(1),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
+                        fontSize: 15,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                '${venueDetail!.ratingCount} reviews',
-                style: const TextStyle(color: Colors.grey),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  '${venueDetail!.ratingCount} reviews',
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
           // Description
           if (venueDetail!.description != null &&
               venueDetail!.description!.isNotEmpty) ...[
             Text(
               venueDetail!.description!,
-              style: const TextStyle(fontSize: 14, height: 1.5),
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.6,
+                color: Color(0xFF374151),
+              ),
+              maxLines: 10,
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
           ],
 
           // Location
           _buildInfoRow(
             Icons.location_on,
-            'Lokasi',
+            'Location',
             venueDetail!.address,
             onTap: venueDetail!.locationUrl != null
                 ? _showLocationDialog
                 : null,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Contact
           if (venueDetail!.contact != null)
-            _buildInfoRow(Icons.phone, 'Kontak', venueDetail!.contact!),
+            _buildInfoRow(Icons.phone, 'Contact', venueDetail!.contact!),
         ],
       ),
     );
@@ -362,80 +577,122 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   }) {
     return InkWell(
       onTap: onTap,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF6B7280),
+                      letterSpacing: 0.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontSize: 14)),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (onTap != null)
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-        ],
+            if (onTap != null)
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildFacilities() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Fasilitas',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            'Facilities',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF111827),
+              letterSpacing: -0.3,
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 12,
+            runSpacing: 12,
             children: venueDetail!.facilities.map((facility) {
-              return Chip(
-                label: Text(
-                  facility.name,
-                  style: const TextStyle(fontSize: 12),
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
                 ),
-                avatar: const Icon(Icons.check_circle, size: 16),
-                backgroundColor: Colors.grey[100],
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      facility.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF374151),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               );
             }).toList(),
           ),
@@ -446,155 +703,211 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
 
   Widget _buildCourts() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Pilih Lapangan',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 1.2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+            'Select a Court',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF111827),
+              letterSpacing: -0.5,
             ),
-            itemCount: venueDetail!.courts.length,
-            itemBuilder: (context, index) {
-              final court = venueDetail!.courts[index];
-              final isSelected = selectedCourt?.id == court.id;
+          ),
+          const SizedBox(height: 20),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // More responsive breakpoints matching HTML
+              final crossAxisCount = constraints.maxWidth < 400
+                  ? 2
+                  : constraints.maxWidth < 650
+                  ? 3
+                  : 4;
+              final aspectRatio = constraints.maxWidth < 400 ? 0.85 : 0.78;
 
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedCourt = isSelected ? null : court;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: isSelected
-                          ? [
-                              Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.secondary,
-                            ]
-                          : [
-                              Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.7),
-                              Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.9),
-                            ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: aspectRatio,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: venueDetail!.courts.length,
+                itemBuilder: (context, index) {
+                  final court = venueDetail!.courts[index];
+                  final isSelected = selectedCourt?.id == court.id;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedCourt = isSelected ? null : court;
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(
+                        constraints.maxWidth < 400 ? 10 : 12,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            const Color(0xFF5409DA),
+                            const Color(0xFF5409DA).withOpacity(0.85),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF14B8A6)
+                              : const Color(0xFF5409DA).withOpacity(0.3),
+                          width: 2,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF14B8A6,
+                                  ).withOpacity(0.5),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Text(
-                              court.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  court.name,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            ),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                            ],
                           ),
-                          if (isSelected)
-                            const Icon(
-                              Icons.check_circle,
-                              color: Colors.white,
-                              size: 20,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Rp ${court.pricePerHour.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Text(
+                                '/jam',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${court.sessions.length} sesi tersedia',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Rp ${court.pricePerHour.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const Text(
-                            '/jam',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${court.sessions.length} sesi tersedia',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
           ),
           if (selectedCourt != null) ...[
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
+            const Divider(height: 1),
+            const SizedBox(height: 24),
             Text(
-              'Sesi untuk ${selectedCourt!.name}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'Sessions for ${selectedCourt!.name}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1F2937),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 10,
+              runSpacing: 10,
               children: selectedCourt!.sessions.map((session) {
                 return Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                    horizontal: 14,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: session.isActive
-                        ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                        : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8),
+                    gradient: session.isActive
+                        ? LinearGradient(
+                            colors: [
+                              Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.15),
+                              Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.08),
+                            ],
+                          )
+                        : null,
+                    color: session.isActive ? null : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: session.isActive
                           ? Theme.of(context).colorScheme.primary
-                          : Colors.grey,
+                          : const Color(0xFFE5E7EB),
+                      width: 1.5,
                     ),
                   ),
                   child: Column(
@@ -606,18 +919,22 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: session.isActive
-                              ? Colors.black87
-                              : Colors.grey,
+                              ? const Color(0xFF111827)
+                              : const Color(0xFF9CA3AF),
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         '${session.startTime} - ${session.endTime}',
                         style: TextStyle(
                           fontSize: 11,
+                          fontWeight: FontWeight.w500,
                           color: session.isActive
-                              ? Colors.black54
-                              : Colors.grey,
+                              ? const Color(0xFF6B7280)
+                              : const Color(0xFF9CA3AF),
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -632,32 +949,43 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
 
   Widget _buildReviews() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Reviews',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                '${venueDetail!.reviews.length} ulasan',
-                style: const TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ],
+          const Text(
+            'Reviews',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F2937),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
+          Text(
+            '${venueDetail!.reviews.length} reviews • ${venueDetail!.avgRating.toStringAsFixed(1)} average rating',
+            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 20),
           if (venueDetail!.reviews.isEmpty)
             const Center(
               child: Padding(
@@ -706,6 +1034,8 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               Row(
                                 children: [
@@ -741,6 +1071,8 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                       Text(
                         review.comment!,
                         style: const TextStyle(fontSize: 13, height: 1.4),
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ],
