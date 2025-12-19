@@ -7,6 +7,7 @@ import 'screens/user/user_home_page.dart';
 import 'screens/mitra/mitra_home_page.dart';
 import 'screens/admin/admin_home_page.dart';
 import 'screens/admin/admin_mitra_list_page.dart';
+import 'screens/admin/admin_earnings_list_page.dart';
 // import 'widgets/role_selector_page.dart';
 import 'providers/user_provider.dart';
 
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
           '/mitra/home': (context) => const MitraHomePage(),
           '/admin/home': (context) => const AdminHomePage(),
           '/admin/kelola-pengguna': (context) => const AdminMitraListPage(),
+          '/admin/pendapatan-mitra': (context) => const AdminEarningsListPage(),
         },
       ),
     );

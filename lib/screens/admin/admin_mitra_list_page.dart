@@ -176,52 +176,83 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                child: Row(
                   children: [
-                    // Breadcrumb
-                    Row(
-                      children: [
-                        InkWell(
-                          onTap: () => Navigator.pop(context),
-                          child: const Text(
-                            'Dashboard',
+                    // Left side - Title and breadcrumb
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Breadcrumb
+                          Row(
+                            children: [
+                              InkWell(
+                                onTap: () => Navigator.pushReplacementNamed(context, '/admin/home'),
+                                child: const Text(
+                                  'Dashboard',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ),
+                              const Text(
+                                ' / ',
+                                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                              ),
+                              const Text(
+                                'Kelola Mitra',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF111827),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Title
+                          const Text(
+                            'Kelola Mitra',
                             style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF5409DA),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827),
                             ),
                           ),
-                        ),
-                        const Text(
-                          ' / ',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                        const Text(
-                          'Kelola Mitra',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w500,
+                          const SizedBox(height: 4),
+                          // Subtitle
+                          const Text(
+                            'Kelola dan verifikasi mitra pemilik lapangan',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6B7280),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Title
-                    const Text(
-                      'Kelola Mitra',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Subtitle
-                    const Text(
-                      'Kelola dan verifikasi mitra pemilik lapangan',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    const SizedBox(width: 16),
+                    // Right side - Earnings button
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/admin/pendapatan-mitra');
+                      },
+                      icon: const Icon(Icons.attach_money, size: 16),
+                      label: const Text('Lihat Earnings Mitra'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5409DA),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 1,
+                      ),
                     ),
                   ],
                 ),
@@ -333,7 +364,7 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
             children: [
               // Header "Daftar Mitra"
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(color: Colors.grey.shade200),
@@ -355,7 +386,7 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               // Table Header
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
+                  horizontal: 24,
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
@@ -369,7 +400,7 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
                     const SizedBox(
                       width: 40,
                       child: Text(
-                        '#',
+                        'NO',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -461,7 +492,7 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
       },
       child: Container(
         color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
           children: [
             // # Column
@@ -469,7 +500,10 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               width: 40,
               child: Text(
                 '$index',
-                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF111827),
+                ),
               ),
             ),
             // Nama Column
@@ -478,9 +512,9 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               child: Text(
                 mitra.nama,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black87,
+                  color: Color(0xFF111827),
                 ),
               ),
             ),
@@ -489,7 +523,10 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               flex: 2,
               child: Text(
                 mitra.email,
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF6B7280),
+                ),
               ),
             ),
             // Status Column

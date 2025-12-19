@@ -289,7 +289,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
         const SizedBox(height: 12),
         _buildActionCard(
           'Kelola Pengguna',
-          'Kelola user dan mitra',
+          'Lihat dan kelola user',
           Icons.people,
           Colors.blue,
           () {
@@ -303,10 +303,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           Icons.attach_money,
           Colors.purple,
           () {
-            // TODO: Navigate to earnings
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Fitur pendapatan segera hadir')),
-            );
+            Navigator.pushNamed(context, '/admin/pendapatan-mitra');
           },
         ),
       ],
