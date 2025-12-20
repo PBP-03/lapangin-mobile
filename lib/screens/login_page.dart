@@ -1,8 +1,8 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import '../models/user.dart';
+import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import '../services/auth_service.dart';
 

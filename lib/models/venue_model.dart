@@ -1,131 +1,238 @@
-class VenueImageModel {
-  final int id;
-  final String url;
-  final bool isPrimary;
-  final String caption;
+class SportsCategory {
+  final int? id;
+  final String name; // 'FUTSAL', 'BADMINTON', etc.
+  final String? description;
+  final String? icon;
 
-  VenueImageModel({
-    required this.id,
-    required this.url,
-    required this.isPrimary,
-    this.caption = '',
-  });
+  SportsCategory({this.id, required this.name, this.description, this.icon});
 
-  factory VenueImageModel.fromJson(Map<String, dynamic> json) {
-    return VenueImageModel(
-      id: json['id'] ?? 0,
-      url: json['url'] ?? '',
-      isPrimary: json['is_primary'] ?? false,
-      caption: json['caption'] ?? '',
+  factory SportsCategory.fromJson(Map<String, dynamic> json) {
+    return SportsCategory(
+      id: json['id'] as int?,
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      icon: json['icon'] as String?,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'description': description, 'icon': icon};
+  }
+
+  String get displayName {
+    // Convert from 'FUTSAL' to 'Futsal'
+    if (name.isEmpty) return '';
+    return name[0].toUpperCase() + name.substring(1).toLowerCase();
   }
 }
 
-class CourtCategory {
-  final String code;
-  final String displayName;
-
-  CourtCategory({required this.code, required this.displayName});
-
-  factory CourtCategory.fromJson(Map<String, dynamic> json) {
-    return CourtCategory(
-      code: json['code'] ?? '',
-      displayName: json['display_name'] ?? '',
-    );
-  }
-}
-
-class VenueCourt {
-  final int id;
+class Facility {
+  final int? id;
   final String name;
-  final double pricePerHour;
-  final String description;
-  final String category;
-  final bool isActive;
+  final String? icon;
+  final String? description;
 
-  VenueCourt({
-    required this.id,
-    required this.name,
-    required this.pricePerHour,
-    required this.description,
-    required this.category,
-    required this.isActive,
-  });
+  Facility({this.id, required this.name, this.icon, this.description});
 
-  factory VenueCourt.fromJson(Map<String, dynamic> json) {
-    double price = 0.0;
-    if (json['price_per_hour'] != null) {
-      if (json['price_per_hour'] is String) {
-        price = double.tryParse(json['price_per_hour']) ?? 0.0;
-      } else if (json['price_per_hour'] is num) {
-        price = json['price_per_hour'].toDouble();
-      }
-    }
-
-    return VenueCourt(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      pricePerHour: price,
-      description: json['description'] ?? '',
-      category: json['category'] ?? '',
-      isActive: json['is_active'] ?? true,
+  factory Facility.fromJson(Map<String, dynamic> json) {
+    return Facility(
+      id: json['id'] as int?,
+      name: json['name'] as String,
+      icon: json['icon'] as String?,
+      description: json['description'] as String?,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'icon': icon, 'description': description};
   }
 }
 
-class VenueModel {
+class Venue {
   final String id;
   final String name;
+  final String? ownerId;
   final String address;
-  final String contact;
-  final String description;
+  final String? locationUrl;
+  final String? contact;
+  final String? description;
   final int numberOfCourts;
-  final String verificationStatus;
-  final List<VenueImageModel> images;
-  final List<VenueCourt> courts;
+  final String verificationStatus; // 'pending', 'approved', 'rejected'
+  final String? verifiedBy;
+  final DateTime? verificationDate;
+  final String? rejectionReason;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final List<String> images;
+  final double? averageRating;
+  final List<String> categories;
+  final double? averagePrice;
+  final int totalReviews;
+  final String? phoneNumber;
+  final String? openingTime;
+  final String? closingTime;
+  final List<Facility> facilities;
+  final List<SportsCategory> sportsCategories;
+  final List<dynamic>
+  courts; // Store courts as dynamic to avoid circular dependency
 
-  VenueModel({
+  Venue({
     required this.id,
     required this.name,
+    this.ownerId,
     required this.address,
-    required this.contact,
-    required this.description,
+    this.locationUrl,
+    this.contact,
+    this.description,
     required this.numberOfCourts,
     required this.verificationStatus,
-    required this.images,
-    required this.courts,
+    this.verifiedBy,
+    this.verificationDate,
+    this.rejectionReason,
+    this.createdAt,
+    this.updatedAt,
+    this.images = const [],
+    this.averageRating,
+    this.categories = const [],
+    this.averagePrice,
+    this.totalReviews = 0,
+    this.phoneNumber,
+    this.openingTime,
+    this.closingTime,
+    this.facilities = const [],
+    this.sportsCategories = const [],
+    this.courts = const [],
   });
 
-  String? get primaryImageUrl {
-    final primary = images.where((img) => img.isPrimary).firstOrNull;
-    return primary?.url ?? (images.isNotEmpty ? images.first.url : null);
+  factory Venue.fromJson(Map<String, dynamic> json) {
+    // Handle category field - can be string or list
+    List<String> categoriesList = [];
+    if (json['category'] != null) {
+      if (json['category'] is String) {
+        final catString = json['category'] as String;
+        categoriesList = catString.isNotEmpty
+            ? catString.split(',').map((s) => s.trim()).toList()
+            : [];
+      }
+    } else if (json['categories'] != null) {
+      categoriesList =
+          (json['categories'] as List<dynamic>?)?.cast<String>() ?? [];
+    }
+
+    return Venue(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      ownerId: json['owner'] as String? ?? json['owner_id'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+      locationUrl: json['location_url'] as String?,
+      contact: json['contact'] as String?,
+      description: json['description'] as String?,
+      numberOfCourts: json['number_of_courts'] as int? ?? 0,
+      verificationStatus: json['verification_status'] as String? ?? 'approved',
+      verifiedBy: json['verified_by'] as String?,
+      verificationDate: json['verification_date'] != null
+          ? DateTime.tryParse(json['verification_date'] as String)
+          : null,
+      rejectionReason: json['rejection_reason'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'] as String) ?? DateTime.now()
+          : DateTime.now(),
+      images: (json['images'] as List<dynamic>?)?.cast<String>() ?? [],
+      averageRating:
+          (json['avg_rating'] as num?)?.toDouble() ??
+          (json['average_rating'] as num?)?.toDouble(),
+      categories: categoriesList,
+      averagePrice:
+          (json['price_per_hour'] as num?)?.toDouble() ??
+          (json['average_price'] as num?)?.toDouble(),
+      totalReviews:
+          json['rating_count'] as int? ?? json['total_reviews'] as int? ?? 0,
+      phoneNumber: json['phone_number'] as String?,
+      openingTime: json['opening_time'] as String?,
+      closingTime: json['closing_time'] as String?,
+      facilities:
+          (json['facilities'] as List<dynamic>?)
+              ?.map((f) => Facility.fromJson(f))
+              .toList() ??
+          [],
+      sportsCategories:
+          (json['sports_categories'] as List<dynamic>?)
+              ?.map((c) => SportsCategory.fromJson(c))
+              .toList() ??
+          [],
+      courts: (json['courts'] as List<dynamic>?)?.toList() ?? [],
+    );
   }
 
-  factory VenueModel.fromJson(Map<String, dynamic> json) {
-    List<VenueImageModel> imagesList = [];
-    if (json['images'] != null) {
-      imagesList = (json['images'] as List)
-          .map((img) => VenueImageModel.fromJson(img))
-          .toList();
-    }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'owner': ownerId,
+      'address': address,
+      'location_url': locationUrl,
+      'contact': contact,
+      'description': description,
+      'number_of_courts': numberOfCourts,
+      'verification_status': verificationStatus,
+      'verified_by': verifiedBy,
+      'verification_date': verificationDate?.toIso8601String(),
+      'rejection_reason': rejectionReason,
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+      'images': images,
+      'average_rating': averageRating,
+      'categories': categories,
+      'average_price': averagePrice,
+    };
+  }
 
-    List<VenueCourt> courtsList = [];
-    if (json['courts'] != null) {
-      courtsList = (json['courts'] as List)
-          .map((court) => VenueCourt.fromJson(court))
-          .toList();
-    }
+  bool get isVerified => verificationStatus == 'approved';
+  bool get isPending => verificationStatus == 'pending';
+  bool get isRejected => verificationStatus == 'rejected';
 
-    return VenueModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      address: json['address'] ?? '',
-      contact: json['contact'] ?? '',
-      description: json['description'] ?? '',
-      numberOfCourts: json['number_of_courts'] ?? 0,
-      verificationStatus: json['verification_status'] ?? 'pending',
-      images: imagesList,
-      courts: courtsList,
+  String get primaryImage => images.isNotEmpty ? images.first : '';
+}
+
+class VenueImage {
+  final int id;
+  final String venueId;
+  final String imageUrl;
+  final bool isPrimary;
+  final String? caption;
+  final DateTime uploadedAt;
+
+  VenueImage({
+    required this.id,
+    required this.venueId,
+    required this.imageUrl,
+    this.isPrimary = false,
+    this.caption,
+    required this.uploadedAt,
+  });
+
+  factory VenueImage.fromJson(Map<String, dynamic> json) {
+    return VenueImage(
+      id: json['id'] as int,
+      venueId: json['venue'] as String? ?? json['venue_id'] as String,
+      imageUrl: json['image_url'] as String,
+      isPrimary: json['is_primary'] as bool? ?? false,
+      caption: json['caption'] as String?,
+      uploadedAt: DateTime.parse(json['uploaded_at'] as String),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'venue': venueId,
+      'image_url': imageUrl,
+      'is_primary': isPrimary,
+      'caption': caption,
+      'uploaded_at': uploadedAt.toIso8601String(),
+    };
   }
 }
