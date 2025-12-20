@@ -11,39 +11,34 @@ class UserHomePage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Dashboard'),
-        backgroundColor: const Color(0xFF5409DA),
+        title: const Text('Home'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              userProvider.logout();
-              Navigator.pushReplacementNamed(context, '/login');
-            },
-          ),
-        ],
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.person, size: 100, color: Color(0xFF5409DA)),
+            Icon(
+              Icons.home,
+              size: 100,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 24),
             Text(
-              'Welcome, ${userProvider.user?.firstName ?? "User"}!',
+              'Welcome, ${userProvider.user?.username ?? "User"}!',
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
-              'User Dashboard',
+              'LapangIN - Find Your Perfect Court',
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
             const Padding(
               padding: EdgeInsets.all(24.0),
               child: Text(
-                'This is the User home page. Here you can browse venues, make bookings, and manage your reservations.',
+                'Browse venues, make bookings, and manage your reservations all in one place.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14),
               ),

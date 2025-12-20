@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import '../../config/config.dart';
 import '../../models/venue_detail.dart';
 import '../../providers/user_provider.dart';
 
@@ -294,7 +295,9 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                     }
                   },
                   child: Image.network(
-                    venueDetail!.images[selectedImageIndex],
+                    AppConfig.buildProxyImageUrl(
+                      venueDetail!.images[selectedImageIndex],
+                    ),
                     height: imageHeight,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -431,7 +434,9 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(6),
                             child: Image.network(
-                              venueDetail!.images[index],
+                              AppConfig.buildProxyImageUrl(
+                                venueDetail!.images[index],
+                              ),
                               width: 80,
                               height: 80,
                               fit: BoxFit.cover,

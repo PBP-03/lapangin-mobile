@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import '../../config/config.dart';
 import '../../models/venue.dart';
 import '../../providers/user_provider.dart';
 import 'venue_detail_page.dart';
@@ -1147,7 +1148,9 @@ class _VenueListPageState extends State<VenueListPage> {
                           ),
                           child: venue.images.isNotEmpty
                               ? Image.network(
-                                  venue.images.first,
+                                  AppConfig.buildProxyImageUrl(
+                                    venue.images.first,
+                                  ),
                                   width: double.infinity,
                                   height: double.infinity,
                                   fit: BoxFit.cover,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:lapangin_mobile/config/config.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:lapangin_mobile/screens/mitra/lapangan_form_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -385,7 +386,7 @@ class _LapanganPageState extends State<LapanganPage> {
                     imageUrl.isNotEmpty &&
                         imageUrl != 'https://via.placeholder.com/400x300'
                     ? Image.network(
-                        imageUrl,
+                        AppConfig.buildProxyImageUrl(imageUrl),
                         height: 180,
                         width: double.infinity,
                         fit: BoxFit.cover,

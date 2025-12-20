@@ -41,4 +41,12 @@ class AppConfig {
   static String buildUrl(String endpoint) {
     return '$baseUrl$endpoint';
   }
+
+  // Build proxy image URL
+  static String buildProxyImageUrl(String imageUrl) {
+    if (imageUrl.isEmpty) return '';
+    // Encode the image URL to pass it as a query parameter
+    final encodedUrl = Uri.encodeComponent(imageUrl);
+    return '$baseUrl/api/proxy-image/?url=$encodedUrl';
+  }
 }

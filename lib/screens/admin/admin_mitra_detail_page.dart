@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import '../../config/config.dart';
 import '../../models/venue_model.dart';
 import '../../services/admin_mitra_service.dart';
 
@@ -20,7 +21,7 @@ class AdminMitraDetailPage extends StatefulWidget {
 
 class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
   Map<String, dynamic>? _mitraData;
-  List<VenueModel>? _venueList;
+  List<Venue>? _venueList;
   bool _isLoading = true;
   String? _errorMessage;
   Set<int> _expandedVenues = {};
@@ -400,7 +401,7 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
     );
   }
 
-  Widget _buildVenueCard(VenueModel venue, int index) {
+  Widget _buildVenueCard(Venue venue, int index) {
     final isExpanded = _expandedVenues.contains(index);
 
     return Container(
@@ -483,9 +484,9 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
             ),
           ),
           // Image
-          if (venue.primaryImageUrl != null)
+          if (venue.primaryImage.isNotEmpty)
             Image.network(
-              venue.primaryImageUrl!,
+              AppConfig.buildProxyImageUrl(venue.primaryImage),
               width: double.infinity,
               height: 192,
               fit: BoxFit.cover,
@@ -500,13 +501,14 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
               children: [
                 _buildDetailRow(Icons.location_on, venue.address),
                 const SizedBox(height: 8),
-                _buildDetailRow(Icons.phone, venue.contact),
+                _buildDetailRow(Icons.phone, venue.contact ?? 'N/A'),
                 const SizedBox(height: 8),
                 _buildDetailRow(
                   Icons.sports_soccer,
                   'Jumlah Lapangan: ${venue.numberOfCourts}',
                 ),
-                if (venue.description.isNotEmpty) ...[
+                if (venue.description != null &&
+                    venue.description!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -527,7 +529,7 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          venue.description,
+                          venue.description!,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade700,
