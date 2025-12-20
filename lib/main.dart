@@ -5,7 +5,6 @@ import 'providers/user_provider.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/user/venue_list_page.dart';
-import 'screens/mitra/mitra_home_page.dart';
 import 'screens/admin/admin_home_page.dart';
 import 'screens/admin/admin_mitra_list_page.dart';
 import 'screens/admin/admin_earnings_list_page.dart';
@@ -48,8 +47,8 @@ class MyApp extends StatelessWidget {
           '/register': (context) => const RegisterPage(),
           '/home': (context) => const MainScaffold(initialIndex: 0),
           '/user/home': (context) => const MainScaffold(initialIndex: 0),
+          '/mitra/home': (context) => const MainScaffold(initialIndex: 0),
           '/user/venues': (context) => const VenueListPage(),
-          '/mitra/home': (context) => const MitraHomePage(),
           '/admin/home': (context) => const AdminHomePage(),
           '/admin/kelola-pengguna': (context) => const AdminMitraListPage(),
           '/admin/pendapatan-mitra': (context) => const AdminEarningsListPage(),

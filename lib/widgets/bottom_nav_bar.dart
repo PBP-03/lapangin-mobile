@@ -18,17 +18,39 @@ class MainScaffold extends StatefulWidget {
 
 class _MainScaffoldState extends State<MainScaffold> {
   late int _selectedIndex;
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = [];
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    // Initialize navigator keys for each tab
+    for (int i = 0; i < 5; i++) {
+      _navigatorKeys.add(GlobalKey<NavigatorState>());
+    }
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == _selectedIndex) {
+      // Pop to root if tapping the same tab
+      _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
+  }
+
+  Widget _buildNavigator(int index, Widget child) {
+    return Navigator(
+      key: _navigatorKeys[index],
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute(
+          builder: (context) => child,
+          settings: settings,
+        );
+      },
+    );
   }
 
   @override
@@ -38,11 +60,11 @@ class _MainScaffoldState extends State<MainScaffold> {
 
     // Define pages based on user role
     List<Widget> pages = [
-      const UserHomePage(),
-      const VenueListPage(),
-      const BookingHistoryPage(),
-      if (isMitra) const MitraHomePage(),
-      const ProfilePage(),
+      _buildNavigator(0, const UserHomePage()),
+      _buildNavigator(1, const VenueListPage()),
+      _buildNavigator(2, const BookingHistoryPage()),
+      if (isMitra) _buildNavigator(3, const MitraHomePage()),
+      _buildNavigator(isMitra ? 4 : 3, const ProfilePage()),
     ];
 
     // Define navigation items
@@ -75,17 +97,34 @@ class _MainScaffoldState extends State<MainScaffold> {
       ),
     ];
 
-    return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: pages),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        items: navItems,
+    return WillPopScope(
+      onWillPop: () async {
+        // Handle back button - pop the current tab's navigator
+        final isFirstRouteInCurrentTab = !await _navigatorKeys[_selectedIndex]
+            .currentState!
+            .maybePop();
+
+        if (isFirstRouteInCurrentTab) {
+          // If on first route, switch to home tab
+          if (_selectedIndex != 0) {
+            setState(() => _selectedIndex = 0);
+            return false;
+          }
+        }
+        return isFirstRouteInCurrentTab;
+      },
+      child: Scaffold(
+        body: IndexedStack(index: _selectedIndex, children: pages),
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Colors.grey,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          items: navItems,
+        ),
       ),
     );
   }
