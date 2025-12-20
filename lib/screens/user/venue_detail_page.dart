@@ -41,7 +41,20 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
           backgroundColor: Colors.red,
         ),
       );
-      Navigator.pop(context);
+      final role = userProvider.user?.role;
+      final targetRoute = switch (role) {
+        'admin' => '/admin/home',
+        'mitra' => '/mitra/home',
+        _ => '/login',
+      };
+
+      Future.microtask(() {
+        if (!mounted) return;
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).pushNamedAndRemoveUntil(targetRoute, (route) => false);
+      });
     } else {
       fetchVenueDetail();
     }

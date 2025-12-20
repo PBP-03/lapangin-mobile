@@ -63,7 +63,22 @@ class _VenueListPageState extends State<VenueListPage> {
           backgroundColor: Colors.red,
         ),
       );
-      Navigator.pop(context);
+      final role = userProvider.user?.role;
+      final targetRoute = switch (role) {
+        'admin' => '/admin/home',
+        'mitra' => '/mitra/home',
+        _ => '/login',
+      };
+
+      // Don't pop the last route of a nested Navigator (can trigger
+      // Navigator assertion `_history.isNotEmpty`). Redirect using rootNavigator.
+      Future.microtask(() {
+        if (!mounted) return;
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).pushNamedAndRemoveUntil(targetRoute, (route) => false);
+      });
     } else {
       fetchVenues();
     }
@@ -175,9 +190,10 @@ class _VenueListPageState extends State<VenueListPage> {
   }
 
   Widget _buildCategoryDropdown() {
-    return DropdownButtonFormField<String>(
+    return DropdownButtonFormField<String?>(
       key: const ValueKey('category_dropdown'),
       value: selectedCategory,
+      isExpanded: true,
       decoration: InputDecoration(
         hintText: 'Pilih Cabang Olahraga',
         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
@@ -197,16 +213,16 @@ class _VenueListPageState extends State<VenueListPage> {
         fillColor: Colors.white.withOpacity(0.8),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 16,
+          vertical: 14,
         ),
       ),
       items: const [
-        DropdownMenuItem(value: null, child: Text('Semua')),
-        DropdownMenuItem(value: 'FUTSAL', child: Text('Futsal')),
-        DropdownMenuItem(value: 'BADMINTON', child: Text('Badminton')),
-        DropdownMenuItem(value: 'BASKET', child: Text('Basket')),
-        DropdownMenuItem(value: 'TENNIS', child: Text('Tennis')),
-        DropdownMenuItem(value: 'PADEL', child: Text('Padel')),
+        DropdownMenuItem<String?>(value: null, child: Text('Semua')),
+        DropdownMenuItem<String?>(value: 'FUTSAL', child: Text('Futsal')),
+        DropdownMenuItem<String?>(value: 'BADMINTON', child: Text('Badminton')),
+        DropdownMenuItem<String?>(value: 'BASKET', child: Text('Basket')),
+        DropdownMenuItem<String?>(value: 'TENNIS', child: Text('Tennis')),
+        DropdownMenuItem<String?>(value: 'PADEL', child: Text('Padel')),
       ],
       onChanged: (value) {
         setState(() {
@@ -217,9 +233,10 @@ class _VenueListPageState extends State<VenueListPage> {
   }
 
   Widget _buildRatingDropdown() {
-    return DropdownButtonFormField<String>(
+    return DropdownButtonFormField<String?>(
       key: const ValueKey('rating_dropdown'),
       value: selectedMinRating,
+      isExpanded: true,
       decoration: InputDecoration(
         hintText: 'Min. Rating',
         hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
@@ -239,14 +256,14 @@ class _VenueListPageState extends State<VenueListPage> {
         fillColor: Colors.white.withOpacity(0.8),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 16,
+          vertical: 14,
         ),
       ),
       items: const [
-        DropdownMenuItem(value: null, child: Text('Semua')),
-        DropdownMenuItem(value: '4.5', child: Text('⭐ 4.5+')),
-        DropdownMenuItem(value: '4', child: Text('⭐ 4.0+')),
-        DropdownMenuItem(value: '3', child: Text('⭐ 3.0+')),
+        DropdownMenuItem<String?>(value: null, child: Text('Semua')),
+        DropdownMenuItem<String?>(value: '4.5', child: Text('⭐ 4.5+')),
+        DropdownMenuItem<String?>(value: '4', child: Text('⭐ 4.0+')),
+        DropdownMenuItem<String?>(value: '3', child: Text('⭐ 3.0+')),
       ],
       onChanged: (value) {
         setState(() {
@@ -833,22 +850,24 @@ class _VenueListPageState extends State<VenueListPage> {
                 double spacing;
                 double aspectRatio;
 
-                // Responsive grid configuration - max 3 columns
+                // Responsive grid configuration - compact cards
                 if (constraints.crossAxisExtent < 600) {
-                  // Mobile: 1 column - more vertical space
-                  crossAxisExtent = constraints.crossAxisExtent - 32;
-                  spacing = 12;
-                  aspectRatio = 0.75; // Taller card for more content
-                } else if (constraints.crossAxisExtent < 1000) {
-                  // Tablet: 2 columns - more vertical space
+                  // Mobile: 2 columns - compact cards
                   crossAxisExtent = (constraints.crossAxisExtent - 48) / 2;
-                  spacing = 16;
-                  aspectRatio = 0.78; // Taller card for more content
-                } else {
-                  // Desktop/Full screen: 3 columns max - more vertical space
+                  spacing = 12;
+                  // Higher aspect ratio = less height -> avoids big empty space
+                  // while keeping the card readable on small screens.
+                  aspectRatio = 0.78;
+                } else if (constraints.crossAxisExtent < 900) {
+                  // Tablet: 3 columns - compact cards
                   crossAxisExtent = (constraints.crossAxisExtent - 64) / 3;
-                  spacing = 20;
-                  aspectRatio = 0.82; // Taller card for more content
+                  spacing = 16;
+                  aspectRatio = 0.90;
+                } else {
+                  // Desktop: 4 columns - compact cards
+                  crossAxisExtent = (constraints.crossAxisExtent - 80) / 4;
+                  spacing = 16;
+                  aspectRatio = 0.95;
                 }
 
                 return SliverPadding(
@@ -1086,25 +1105,15 @@ class _VenueListPageState extends State<VenueListPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
+        final isCompact = width < 200;
 
-        // Responsive font sizes - compact and readable
-        final titleSize = width < 160
-            ? 11.0
-            : (width < 200 ? 12.0 : (width < 250 ? 13.0 : 14.0));
-        final ratingSize = width < 160
-            ? 9.0
-            : (width < 200 ? 9.5 : (width < 250 ? 10.5 : 11.5));
-        final locationSize = width < 160
-            ? 8.5
-            : (width < 200 ? 9.0 : (width < 250 ? 9.5 : 10.5));
-        final priceSize = width < 160
-            ? 10.5
-            : (width < 200 ? 11.5 : (width < 250 ? 12.5 : 13.5));
-        final badgeSize = width < 160
-            ? 7.5
-            : (width < 200 ? 8.5 : (width < 250 ? 9.5 : 10.5));
-
-        final iconSize = width < 160 ? 10.5 : (width < 200 ? 11.5 : 12.5);
+        // Responsive font sizes
+        final titleSize = width < 200 ? 13.0 : 14.0;
+        final ratingSize = width < 200 ? 11.0 : 12.0;
+        final locationSize = width < 200 ? 10.0 : 11.0;
+        final priceSize = width < 200 ? 13.0 : 14.0;
+        final badgeSize = width < 200 ? 9.0 : 10.0;
+        final iconSize = width < 200 ? 12.0 : 13.0;
 
         return Container(
           decoration: BoxDecoration(
@@ -1116,7 +1125,6 @@ class _VenueListPageState extends State<VenueListPage> {
                 color: Colors.black.withOpacity(0.06),
                 blurRadius: 12,
                 offset: const Offset(0, 2),
-                spreadRadius: 0,
               ),
             ],
           ),
@@ -1134,191 +1142,182 @@ class _VenueListPageState extends State<VenueListPage> {
               },
               borderRadius: BorderRadius.circular(16),
               child: Column(
+                // Fill the grid cell height so any extra space is taken by
+                // the image area (not left as blank white space under price).
+                mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Venue Image - proportional image space
-                  SizedBox(
-                    height: width < 200 ? 110 : (width < 300 ? 135 : 160),
-                    child: Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(16),
-                            topRight: Radius.circular(16),
-                          ),
-                          child: venue.images.isNotEmpty
-                              ? Image.network(
-                                  AppConfig.buildProxyImageUrl(
-                                    venue.images.first,
-                                  ),
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: const Color(0xFFF1F5F9),
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.stadium,
-                                          size: width < 200 ? 28 : 36,
-                                          color: const Color(0xFF94A3B8),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Container(
+                  // Venue Image (expands to consume any leftover height)
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          // Image
+                          if (venue.images.isNotEmpty)
+                            Image.network(
+                              AppConfig.buildProxyImageUrl(venue.images.first),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
                                   color: const Color(0xFFF1F5F9),
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.stadium,
-                                      size: width < 200 ? 28 : 36,
-                                      color: const Color(0xFF94A3B8),
-                                    ),
+                                  child: Icon(
+                                    Icons.stadium,
+                                    size: 32,
+                                    color: const Color(0xFF94A3B8),
                                   ),
+                                );
+                              },
+                            )
+                          else
+                            Container(
+                              color: const Color(0xFFF1F5F9),
+                              child: Icon(
+                                Icons.stadium,
+                                size: 32,
+                                color: const Color(0xFF94A3B8),
+                              ),
+                            ),
+
+                          // Category Badge
+                          if (venue.category.isNotEmpty)
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
                                 ),
-                        ),
-                        // Category badge - smaller
-                        if (venue.category.isNotEmpty)
-                          Positioned(
-                            top: 8,
-                            left: 8,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: width < 200 ? 6 : 8,
-                                vertical: width < 200 ? 3 : 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 3,
-                                    offset: const Offset(0, 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  venue.category,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: badgeSize,
+                                    color: const Color(0xFF0F172A),
                                   ),
-                                ],
-                              ),
-                              child: Text(
-                                venue.category,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: badgeSize,
-                                  color: const Color(0xFF0F172A),
-                                  height: 1,
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
 
-                  // Venue Info - compact padding
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.all(width < 200 ? 8.0 : 10.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Name
-                          Text(
-                            venue.name,
-                            style: TextStyle(
-                              fontSize: titleSize,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0F172A),
-                              height: 1.25,
-                              letterSpacing: -0.15,
+                  // Content Section
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      10,
+                      isCompact ? 6 : 8,
+                      10,
+                      isCompact ? 8 : 10,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Venue Name
+                        Text(
+                          venue.name,
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF0F172A),
+                            height: 1.1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: isCompact ? 3 : 4),
+
+                        // Rating
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.star,
+                              size: iconSize,
+                              color: const Color(0xFFFBBF24),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: width < 200 ? 3 : 4),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${venue.avgRating.toStringAsFixed(1)} (${venue.ratingCount})',
+                              style: TextStyle(
+                                fontSize: ratingSize,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isCompact ? 3 : 4),
 
-                          // Rating - simplified
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.star,
-                                size: iconSize,
-                                color: const Color(0xFFFBBF24),
-                              ),
-                              const SizedBox(width: 3),
-                              Flexible(
-                                child: Text(
-                                  '${venue.avgRating.toStringAsFixed(1)} (${venue.ratingCount})',
-                                  style: TextStyle(
-                                    fontSize: ratingSize,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF0F172A),
-                                    height: 1,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: width < 200 ? 3 : 4),
-
-                          // Location
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: iconSize,
-                                color: const Color(0xFF64748B),
-                              ),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  venue.address,
-                                  style: TextStyle(
-                                    color: const Color(0xFF64748B),
-                                    fontSize: locationSize,
-                                    height: 1.25,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-
-                          // Price section - compact
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Mulai dari',
+                        // Location
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: iconSize,
+                              color: const Color(0xFF64748B),
+                            ),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                venue.address,
                                 style: TextStyle(
-                                  fontSize: locationSize - 1,
                                   color: const Color(0xFF64748B),
-                                  height: 1,
-                                ),
-                              ),
-                              SizedBox(height: width < 200 ? 1 : 2),
-                              Text(
-                                'Rp ${venue.pricePerHour.toStringAsFixed(0)}/jam',
-                                style: TextStyle(
-                                  fontSize: priceSize,
-                                  fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF5409DA),
-                                  height: 1,
-                                  letterSpacing: -0.4,
+                                  fontSize: locationSize,
+                                  height: 1.2,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isCompact ? 5 : 6),
+
+                        // Price
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Mulai dari',
+                              style: TextStyle(
+                                fontSize: locationSize - 1,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              'Rp ${venue.pricePerHour.toStringAsFixed(0)}/jam',
+                              style: TextStyle(
+                                fontSize: priceSize,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF5409DA),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],

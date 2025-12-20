@@ -22,7 +22,7 @@ class AppConfig {
   static const String courtsEndpoint = '/api/courts/';
 
   // Bookings
-  static const String bookingsEndpoint = '/api/bookings/';
+  static const String bookingsEndpoint = '/bookings/history/';
 
   // Reviews
   static const String reviewsEndpoint = '/api/venues/';

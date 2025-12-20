@@ -32,7 +32,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     try {
       final request = context.read<CookieRequest>();
       final response = await request.get(
-        '${ApiConstants.baseUrl}/api/bookings/${widget.bookingId}/',
+        '${ApiConstants.baseUrl}/bookings/history/${widget.bookingId}/',
       );
 
       if (response['success'] == true) {
@@ -55,7 +55,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     try {
       final request = context.read<CookieRequest>();
       final response = await request.post(
-        '${ApiConstants.baseUrl}/api/bookings/${widget.bookingId}/',
+        '${ApiConstants.baseUrl}/bookings/history/${widget.bookingId}/',
         {'booking_status': status},
       );
 

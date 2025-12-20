@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'providers/user_provider.dart';
@@ -10,7 +12,13 @@ import 'screens/admin/admin_mitra_list_page.dart';
 import 'screens/admin/admin_earnings_list_page.dart';
 import 'widgets/bottom_nav_bar.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Ensure Indonesian locale formatting works (esp. Flutter Web).
+  Intl.defaultLocale = 'id_ID';
+  await initializeDateFormatting('id_ID');
+
   runApp(const MyApp());
 }
 
