@@ -47,10 +47,12 @@ class _VenueFormPageState extends State<VenueFormPage> {
     // Load facilities
     if (venue['facilities'] != null) {
       _facilities = (venue['facilities'] as List)
-          .map((f) => {
-                'name': f['name'].toString(),
-                'icon': f['icon']?.toString() ?? '',
-              })
+          .map(
+            (f) => {
+              'name': f['name'].toString(),
+              'icon': f['icon']?.toString() ?? '',
+            },
+          )
           .toList();
     }
 
@@ -117,7 +119,7 @@ class _VenueFormPageState extends State<VenueFormPage> {
         'contact': _contactController.text.trim(),
         'description': _descriptionController.text.trim(),
         'facilities': facilities, // Send as list, not JSON string
-        'image_urls': imageUrls,  // Send as list, not JSON string
+        'image_urls': imageUrls, // Send as list, not JSON string
       };
 
       dynamic response;
@@ -197,7 +199,7 @@ class _VenueFormPageState extends State<VenueFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         title: Text(widget.venue != null ? 'Edit Venue' : 'Tambah Venue'),
         backgroundColor: const Color(0xFF5409DA),
@@ -210,9 +212,10 @@ class _VenueFormPageState extends State<VenueFormPage> {
           children: [
             // Name
             Card(
-              elevation: 2,
+              elevation: 1,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -222,8 +225,8 @@ class _VenueFormPageState extends State<VenueFormPage> {
                     Text(
                       'Informasi Dasar',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -231,9 +234,30 @@ class _VenueFormPageState extends State<VenueFormPage> {
                       decoration: InputDecoration(
                         labelText: 'Nama Venue *',
                         hintText: 'Contoh: Futsal Arena BSD',
-                        prefixIcon: const Icon(Icons.store),
+                        prefixIcon: const Icon(
+                          Icons.store,
+                          color: Color(0xFF5409DA),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E5E5),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E5E5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF5409DA),
+                            width: 2,
+                          ),
                         ),
                       ),
                       validator: (value) {
@@ -249,9 +273,30 @@ class _VenueFormPageState extends State<VenueFormPage> {
                       decoration: InputDecoration(
                         labelText: 'Alamat *',
                         hintText: 'Alamat lengkap venue',
-                        prefixIcon: const Icon(Icons.location_on),
+                        prefixIcon: const Icon(
+                          Icons.location_on,
+                          color: Color(0xFF5409DA),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E5E5),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E5E5),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF5409DA),
+                            width: 2,
+                          ),
                         ),
                       ),
                       maxLines: 3,
@@ -270,9 +315,10 @@ class _VenueFormPageState extends State<VenueFormPage> {
 
             // Contact Info
             Card(
-              elevation: 2,
+              elevation: 1,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -282,8 +328,8 @@ class _VenueFormPageState extends State<VenueFormPage> {
                     Text(
                       'Informasi Kontak',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -319,9 +365,10 @@ class _VenueFormPageState extends State<VenueFormPage> {
 
             // Description
             Card(
-              elevation: 2,
+              elevation: 1,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -331,8 +378,8 @@ class _VenueFormPageState extends State<VenueFormPage> {
                     Text(
                       'Deskripsi',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -355,9 +402,10 @@ class _VenueFormPageState extends State<VenueFormPage> {
 
             // Facilities
             Card(
-              elevation: 2,
+              elevation: 1,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -369,12 +417,8 @@ class _VenueFormPageState extends State<VenueFormPage> {
                       children: [
                         Text(
                           'Fasilitas',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: () => _addFacilityInput(),
@@ -464,9 +508,10 @@ class _VenueFormPageState extends State<VenueFormPage> {
 
             // Image URLs
             Card(
-              elevation: 2,
+              elevation: 1,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -478,12 +523,8 @@ class _VenueFormPageState extends State<VenueFormPage> {
                       children: [
                         Text(
                           'Gambar Venue (URL)',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         IconButton(
                           onPressed: () => _addImageUrlInput(),

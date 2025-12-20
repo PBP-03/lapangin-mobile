@@ -33,6 +33,9 @@ class _VenuesPageState extends State<VenuesPage> {
       if (response['success'] == true) {
         setState(() {
           _venues = (response['data'] as List).map((venue) {
+            print('🔍 Venue: ${venue['name']}');
+            print('   Description: ${venue['description']}');
+            print('   Facilities: ${venue['facilities']}');
             return {
               'id': venue['id'],
               'name': venue['name'],
@@ -70,7 +73,7 @@ class _VenuesPageState extends State<VenuesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         title: const Text('Kelola Venue'),
         backgroundColor: const Color(0xFF5409DA),
@@ -98,10 +101,21 @@ class _VenuesPageState extends State<VenuesPage> {
                 hintText: 'Cari venue...',
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF5409DA)),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: const Color(0xFFF5F5F5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE5E5E5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF5409DA),
+                    width: 2,
+                  ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -116,17 +130,17 @@ class _VenuesPageState extends State<VenuesPage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredVenues.isEmpty
-                    ? _buildEmptyState()
-                    : RefreshIndicator(
-                        onRefresh: _loadVenues,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _filteredVenues.length,
-                          itemBuilder: (context, index) {
-                            return _buildVenueCard(_filteredVenues[index]);
-                          },
-                        ),
-                      ),
+                ? _buildEmptyState()
+                : RefreshIndicator(
+                    onRefresh: _loadVenues,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _filteredVenues.length,
+                      itemBuilder: (context, index) {
+                        return _buildVenueCard(_filteredVenues[index]);
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -134,9 +148,7 @@ class _VenuesPageState extends State<VenuesPage> {
         onPressed: () async {
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const VenueFormPage(),
-            ),
+            MaterialPageRoute(builder: (context) => const VenueFormPage()),
           );
           if (result == true) {
             _loadVenues();
@@ -154,13 +166,14 @@ class _VenuesPageState extends State<VenuesPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.store_mall_directory_outlined,
-              size: 80, color: Colors.grey[400]),
+          Icon(
+            Icons.store_mall_directory_outlined,
+            size: 80,
+            color: Colors.grey[400],
+          ),
           const SizedBox(height: 16),
           Text(
-            _searchQuery.isEmpty
-                ? 'Belum ada venue'
-                : 'Venue tidak ditemukan',
+            _searchQuery.isEmpty ? 'Belum ada venue' : 'Venue tidak ditemukan',
             style: const TextStyle(fontSize: 18, color: Colors.grey),
           ),
           const SizedBox(height: 8),
@@ -183,7 +196,7 @@ class _VenuesPageState extends State<VenuesPage> {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
+      elevation: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -207,9 +220,10 @@ class _VenuesPageState extends State<VenuesPage> {
                             color: Colors.grey[200],
                             child: Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
                                     ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
+                                          loadingProgress.expectedTotalBytes!
                                     : null,
                               ),
                             ),
@@ -222,8 +236,11 @@ class _VenuesPageState extends State<VenuesPage> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.broken_image,
-                                    size: 48, color: Colors.grey),
+                                const Icon(
+                                  Icons.broken_image,
+                                  size: 48,
+                                  color: Colors.grey,
+                                ),
                                 const SizedBox(height: 8),
                                 Text(
                                   'Gambar tidak tersedia',
@@ -243,8 +260,11 @@ class _VenuesPageState extends State<VenuesPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.image_not_supported,
-                                size: 48, color: Colors.grey[600]),
+                            Icon(
+                              Icons.image_not_supported,
+                              size: 48,
+                              color: Colors.grey[600],
+                            ),
                             const SizedBox(height: 8),
                             Text(
                               'Belum ada foto',
@@ -258,11 +278,7 @@ class _VenuesPageState extends State<VenuesPage> {
                       ),
               ),
               // Status Badge
-              Positioned(
-                top: 12,
-                right: 12,
-                child: _buildStatusBadge(status),
-              ),
+              Positioned(top: 12, right: 12, child: _buildStatusBadge(status)),
               // Image Count
               if (images.length > 1)
                 Positioned(
@@ -316,16 +332,12 @@ class _VenuesPageState extends State<VenuesPage> {
                 // Address
                 Row(
                   children: [
-                    Icon(Icons.location_on,
-                        size: 16, color: Colors.grey[600]),
+                    Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         venue['address'],
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -337,15 +349,15 @@ class _VenuesPageState extends State<VenuesPage> {
                 // Courts Count
                 Row(
                   children: [
-                    Icon(Icons.sports_tennis,
-                        size: 16, color: Colors.grey[600]),
+                    Icon(
+                      Icons.sports_tennis,
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${venue['number_of_courts']} Lapangan',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -375,8 +387,7 @@ class _VenuesPageState extends State<VenuesPage> {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  VenueFormPage(venue: venue),
+                              builder: (context) => VenueFormPage(venue: venue),
                             ),
                           );
                           if (result == true) {
@@ -730,7 +741,7 @@ class _VenuesPageState extends State<VenuesPage> {
     if (confirm == true) {
       try {
         final request = context.read<CookieRequest>();
-        
+
         // Send DELETE request with _method override
         final response = await request.postJson(
           '${ApiConstants.baseUrl}/api/venues/$venueId/',

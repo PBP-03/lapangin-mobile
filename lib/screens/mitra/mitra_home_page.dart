@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:lapangin_mobile/constants/api_constants.dart';
+import 'package:lapangin_mobile/providers/user_provider.dart';
+import 'package:lapangin_mobile/screens/mitra/bookings_page.dart';
+import 'package:lapangin_mobile/screens/mitra/lapangan_page.dart';
+import 'package:lapangin_mobile/screens/mitra/pendapatan_page.dart';
+import 'package:lapangin_mobile/screens/mitra/venues_page.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../../providers/user_provider.dart';
@@ -40,7 +47,11 @@ class _MitraHomePageState extends State<MitraHomePage> {
           _dashboardData = response['data'];
           _isLoading = false;
         });
-        print('✅ Dashboard data loaded');
+        // print('✅ Dashboard data loaded');
+        // print(
+        //   '📊 Total venues: ${(_dashboardData?['venues'] as List?)?.length}',
+        // );
+        // print('📊 Venues data: ${_dashboardData?['venues']}');
       } else {
         throw Exception(response['message'] ?? 'Failed to load dashboard');
       }
@@ -87,6 +98,7 @@ class _MitraHomePageState extends State<MitraHomePage> {
     final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFAFAFA),
       appBar: AppBar(
         title: const Text('Mitra Dashboard'),
         backgroundColor: const Color(0xFF5409DA),
@@ -189,6 +201,36 @@ class _MitraHomePageState extends State<MitraHomePage> {
                               Colors.purple,
                             ),
                           ),
+                          Expanded(
+                            child: _buildStatCard(
+                              'Total Lapangan',
+                              _totalCourts.toString(),
+                              Icons.sports_soccer,
+                              Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatCard(
+                              'Rating Rata-rata',
+                              _avgRating.toStringAsFixed(1),
+                              Icons.star,
+                              Colors.amber,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildStatCard(
+                              'Total Review',
+                              _totalReviews.toString(),
+                              Icons.rate_review,
+                              Colors.green,
+                            ),
+                          ),
                           const SizedBox(width: 12),
                         ],
                       ),
@@ -223,6 +265,45 @@ class _MitraHomePageState extends State<MitraHomePage> {
                               ),
                             ),
                           ),
+                          _buildMenuCard(
+                            context,
+                            'Kelola Lapangan',
+                            'Atur lapangan venue',
+                            Icons.sports_soccer,
+                            Colors.blue,
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LapanganPage(),
+                              ),
+                            ),
+                          ),
+                          _buildMenuCard(
+                            context,
+                            'Kelola Booking',
+                            'Lihat & kelola booking',
+                            Icons.calendar_today,
+                            Colors.orange,
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const BookingsPage(),
+                              ),
+                            ),
+                          ),
+                          _buildMenuCard(
+                            context,
+                            'Pendapatan',
+                            'Pantau keuangan',
+                            Icons.attach_money,
+                            Colors.green,
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const PendapatanPage(),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -243,8 +324,8 @@ class _MitraHomePageState extends State<MitraHomePage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -302,8 +383,11 @@ class _MitraHomePageState extends State<MitraHomePage> {
     VoidCallback onTap,
   ) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../models/user.dart';
+import '../models/user_model.dart';
 
 class UserProvider extends ChangeNotifier {
   User? _user;
@@ -27,5 +27,10 @@ class UserProvider extends ChangeNotifier {
   void updateUser(User user) {
     _user = user;
     notifyListeners();
+  }
+
+  // Empty initialize method for compatibility
+  Future<void> initialize() async {
+    // No-op: the login page handles authentication
   }
 }

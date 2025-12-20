@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../constants/api_constants.dart';
-import '../models/user.dart';
+import '../models/user_model.dart';
 
 class AuthService {
   final CookieRequest request;

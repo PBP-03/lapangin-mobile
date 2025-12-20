@@ -46,8 +46,3 @@ app.*.map.json
 /android/app/release
 
 # Mitra management files
-lib/screens/mitra/booking_detail_page.dart
-lib/screens/mitra/bookings_page.dart
-lib/screens/mitra/lapangan_page.dart
-lib/screens/mitra/pendapatan_page.dart
-lib/screens/mitra/mitra_home_page.dart
