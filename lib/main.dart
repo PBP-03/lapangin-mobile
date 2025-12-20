@@ -5,6 +5,7 @@ import 'providers/user_provider.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/user/user_home_page.dart';
+import 'screens/user/venue_list_page.dart';
 import 'screens/mitra/mitra_home_page.dart';
 import 'screens/admin/admin_home_page.dart';
 
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
           '/login': (context) => const LoginPage(),
           '/register': (context) => const RegisterPage(),
           '/user/home': (context) => const UserHomePage(),
+          '/user/venues': (context) => const VenueListPage(),
           '/mitra/home': (context) => const MitraHomePage(),
           '/admin/home': (context) => const AdminHomePage(),
         },
