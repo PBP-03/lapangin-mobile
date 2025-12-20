@@ -48,6 +48,8 @@ class MyApp extends StatelessWidget {
           '/user/venues': (context) => const VenueListPage(),
           '/mitra/home': (context) => const MitraHomePage(),
           '/admin/home': (context) => const AdminHomePage(),
+          '/admin/kelola-pengguna': (context) => const AdminMitraListPage(),
+          '/admin/pendapatan-mitra': (context) => const AdminEarningsListPage(),
         },
       ),
     );

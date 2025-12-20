@@ -60,4 +60,23 @@ class AuthService {
   bool isLoggedIn() {
     return request.loggedIn;
   }
+
+  Future<Map<String, dynamic>> getAdminDashboard() async {
+    try {
+      final response = await request.get(
+        '${ApiConstants.baseUrl}/api/admin-dashboard/',
+      );
+
+      if (response['success'] == true) {
+        return {'success': true, 'data': response['data']};
+      } else {
+        return {
+          'success': false,
+          'message': response['message'] ?? 'Failed to load dashboard data',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
 }
