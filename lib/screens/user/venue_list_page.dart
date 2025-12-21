@@ -3,7 +3,6 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../../config/config.dart';
 import '../../models/venue.dart';
-import '../../providers/user_provider.dart';
 import 'venue_detail_page.dart';
 
 class VenueListPage extends StatefulWidget {
@@ -17,6 +16,8 @@ class _VenueListPageState extends State<VenueListPage> {
   List<Venue> venues = [];
   bool isLoading = true;
   String errorMessage = '';
+
+  bool _hasFetchedVenues = false;
 
   // Search and filter
   final TextEditingController _searchController = TextEditingController();
@@ -41,7 +42,7 @@ class _VenueListPageState extends State<VenueListPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkUserRole();
+      _fetchVenuesOnce();
     });
   }
 
@@ -54,34 +55,10 @@ class _VenueListPageState extends State<VenueListPage> {
     super.dispose();
   }
 
-  void _checkUserRole() {
-    final userProvider = context.read<UserProvider>();
-    if (userProvider.user?.role != 'user') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hanya user yang dapat mengakses halaman ini'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      final role = userProvider.user?.role;
-      final targetRoute = switch (role) {
-        'admin' => '/admin/home',
-        'mitra' => '/mitra/home',
-        _ => '/login',
-      };
-
-      // Don't pop the last route of a nested Navigator (can trigger
-      // Navigator assertion `_history.isNotEmpty`). Redirect using rootNavigator.
-      Future.microtask(() {
-        if (!mounted) return;
-        Navigator.of(
-          context,
-          rootNavigator: true,
-        ).pushNamedAndRemoveUntil(targetRoute, (route) => false);
-      });
-    } else {
-      fetchVenues();
-    }
+  void _fetchVenuesOnce() {
+    if (_hasFetchedVenues) return;
+    _hasFetchedVenues = true;
+    fetchVenues();
   }
 
   Future<void> fetchVenues({int page = 1}) async {
