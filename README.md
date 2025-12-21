@@ -3,7 +3,17 @@
 [![Build Status](https://app.bitrise.io/app/04ae1d3a-e3ad-4c69-8113-d17be13af7bd/status.svg?token=2kDCrWgxb1WJPjoH7UdVLw&branch=main)](https://app.bitrise.io/app/04ae1d3a-e3ad-4c69-8113-d17be13af7bd)
 
 ## Download
-Download aplikasi versi terbaru: [Download APK](https://app.bitrise.io/app/04ae1d3a-e3ad-4c69-8113-d17be13af7bd/installable-artifacts/1a4861e95a0c18eb/public-install-page/4b32324d3b059bec64aef2f0609e5685)
+Download aplikasi versi terbaru: [Download APK](https://app.bitrise.io/app/04ae1d3a-e3ad-4c69-8113-d17be13af7bd/installable-artifacts/0d892fa0eb425f84/public-install-page/5b9434daf5b00129e9bcbedc37af95c5)
+
+---
+
+## Tautan Deployment & Desain
+
+- **Link Design (Figma):** [https://www.figma.com/team_invite/redeem/H4djMUeJW2NmihEoMSnvd2](https://www.figma.com/team_invite/redeem/H4djMUeJW2NmihEoMSnvd2)
+- **Deployment (PWS):** [https://muhammad-fauzan44-lapangin.pbp.cs.ui.ac.id/](https://muhammad-fauzan44-lapangin.pbp.cs.ui.ac.id/)
+-- **Promotion Video** [https://youtu.be/Bcf1tyqiTGM](https://youtu.be/Bcf1tyqiTGM)
+
+---
 
 ## 👥 Nama-nama Anggota Kelompok
 
@@ -199,15 +209,6 @@ Django Response (JSON) → Flutter menerima & parse
                 ↓
 Update UI dengan data baru
 ```
-
----
-
-## Tautan Deployment & Desain
-
-- **Link Design (Figma):** [https://www.figma.com/team_invite/redeem/H4djMUeJW2NmihEoMSnvd2](https://www.figma.com/team_invite/redeem/H4djMUeJW2NmihEoMSnvd2)
-- **Deployment (PWS):** [https://muhammad-fauzan44-lapangin.pbp.cs.ui.ac.id/](https://muhammad-fauzan44-lapangin.pbp.cs.ui.ac.id/)
-
----
 
 ## 🚀 Quick Start
 
