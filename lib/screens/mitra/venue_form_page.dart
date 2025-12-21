@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class VenueFormPage extends StatefulWidget {
   final Map<String, dynamic>? venue; // For editing
@@ -200,10 +201,8 @@ class _VenueFormPageState extends State<VenueFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BrandedAppBar(
         title: Text(widget.venue != null ? 'Edit Venue' : 'Tambah Venue'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
       ),
       body: Form(
         key: _formKey,

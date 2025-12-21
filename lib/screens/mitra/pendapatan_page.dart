@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class PendapatanPage extends StatefulWidget {
   const PendapatanPage({super.key});
@@ -115,19 +116,17 @@ class _PendapatanPageState extends State<PendapatanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BrandedAppBar(
         title: const Text('Pendapatan & Keuangan'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: DropdownButton<String>(
               value: _selectedPeriod,
-              dropdownColor: const Color(0xFF5409DA),
-              style: const TextStyle(color: Colors.white),
+              dropdownColor: Colors.white,
+              style: const TextStyle(color: Color(0xFF5409DA)),
               underline: Container(),
-              icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF5409DA)),
               items: const [
                 DropdownMenuItem(value: 'all', child: Text('Semua Waktu')),
                 DropdownMenuItem(

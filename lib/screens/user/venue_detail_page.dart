@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../../config/config.dart';
@@ -70,6 +71,11 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  String _formatRupiah(num value) {
+    final f = NumberFormat.decimalPattern('id_ID');
+    return f.format(value.round());
   }
 
   String _formatDateYmd(DateTime date) {
@@ -171,6 +177,111 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
         _selectedBookingDate != null &&
         _selectedSessionIds.isNotEmpty &&
         !_isSessionsLoading;
+  }
+
+  Widget _buildSessionCard(_AvailableCourtSession session) {
+    final selected = _selectedSessionIds.contains(session.id);
+    final disabled = !session.isAvailable;
+    final price = _pricePerHour > 0
+        ? _pricePerHour * (session.durationMinutes / 60.0)
+        : 0.0;
+
+    final borderColor = selected
+        ? Theme.of(context).colorScheme.primary
+        : const Color(0xFFE5E7EB);
+
+    final bgColor = disabled ? const Color(0xFFF9FAFB) : Colors.white;
+    final textColor = disabled
+        ? const Color(0xFF9CA3AF)
+        : const Color(0xFF111827);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: disabled
+            ? null
+            : () {
+                setState(() {
+                  if (selected) {
+                    _selectedSessionIds.remove(session.id);
+                  } else {
+                    _selectedSessionIds.add(session.id);
+                  }
+                });
+              },
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor, width: selected ? 2 : 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(disabled ? 0.02 : 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
+                spreadRadius: -6,
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  disabled ? 'Unavailable' : 'Available',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: disabled
+                        ? const Color(0xFF9CA3AF)
+                        : Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${session.durationMinutes} Minutes',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: disabled
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${session.startTime} - ${session.endTime}',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: textColor,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                Text(
+                  _pricePerHour > 0 ? 'Rp ${_formatRupiah(price)}' : 'Rp -',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: disabled
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _goToCheckout() async {
@@ -1116,49 +1227,41 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                 ),
               )
             else
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _availableSessions.map((session) {
-                  final selected = _selectedSessionIds.contains(session.id);
-                  final disabled = !session.isAvailable;
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  final crossAxisCount = w >= 900
+                      ? 6
+                      : w >= 650
+                      ? 4
+                      : w >= 400
+                      ? 3
+                      : 2;
+                  // Smaller ratio => taller cards (prevents vertical overflow)
+                  final aspectRatio = crossAxisCount >= 6
+                      ? 1.15
+                      : crossAxisCount == 4
+                      ? 1.10
+                      : crossAxisCount == 3
+                      ? 1.05
+                      : 1.00;
 
-                  return FilterChip(
-                    label: Text(
-                      '${session.startTime} - ${session.endTime}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: disabled
-                            ? const Color(0xFF9CA3AF)
-                            : const Color(0xFF111827),
-                      ),
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      childAspectRatio: aspectRatio,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
                     ),
-                    selected: selected,
-                    onSelected: disabled
-                        ? null
-                        : (value) {
-                            setState(() {
-                              if (value) {
-                                _selectedSessionIds.add(session.id);
-                              } else {
-                                _selectedSessionIds.remove(session.id);
-                              }
-                            });
-                          },
-                    selectedColor: Theme.of(
-                      context,
-                    ).colorScheme.primary.withOpacity(0.18),
-                    checkmarkColor: Theme.of(context).colorScheme.primary,
-                    side: BorderSide(
-                      color: selected
-                          ? Theme.of(context).colorScheme.primary
-                          : const Color(0xFFE5E7EB),
-                    ),
-                    backgroundColor: disabled
-                        ? const Color(0xFFF3F4F6)
-                        : const Color(0xFFF9FAFB),
+                    itemCount: _availableSessions.length,
+                    itemBuilder: (context, index) {
+                      final session = _availableSessions[index];
+                      return _buildSessionCard(session);
+                    },
                   );
-                }).toList(),
+                },
               ),
             const SizedBox(height: 16),
             const SizedBox(height: 14),
@@ -1166,7 +1269,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
               children: [
                 Expanded(
                   child: Text(
-                    'Total: Rp ${_calculateSelectedTotalPrice().toStringAsFixed(0)}',
+                    'Total: Rp ${_formatRupiah(_calculateSelectedTotalPrice())}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

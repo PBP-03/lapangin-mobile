@@ -11,6 +11,7 @@ import 'booking_history_page.dart';
 import 'venue_search_page.dart';
 import 'venue_detail_page.dart';
 import 'venue_list_page.dart';
+import '../../widgets/app_logo.dart';
 
 class UserHomePage extends StatefulWidget {
   const UserHomePage({super.key});
@@ -245,9 +246,19 @@ class _UserHomePageState extends State<UserHomePage> {
             SliverAppBar(
               pinned: true,
               elevation: 0,
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              foregroundColor: AppColors.primary,
               expandedHeight: 340,
+              leading: const Padding(
+                padding: EdgeInsets.only(left: 12),
+                child: AppLogo(
+                  size: 26,
+                  assetPath: 'assets/images/logo/logo.png',
+                  fit: BoxFit.contain,
+                ),
+              ),
+              leadingWidth: 64,
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.parallax,
                 background: _HeroHeader(
@@ -291,7 +302,6 @@ class _UserHomePageState extends State<UserHomePage> {
                   AppSpacing.md,
                   0,
                 ),
-                
               ),
             ),
             SliverToBoxAdapter(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class BookingDetailPage extends StatefulWidget {
   final String bookingId;
@@ -128,11 +129,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
-        title: const Text('Detail Booking'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
-      ),
+      appBar: const BrandedAppBar(title: Text('Detail Booking')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null

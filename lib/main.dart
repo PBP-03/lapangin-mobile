@@ -48,6 +48,11 @@ class MyApp extends StatelessWidget {
           ),
           useMaterial3: true,
           fontFamily: 'Inter',
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            foregroundColor: Color(0xFF5409DA),
+          ),
         ),
         initialRoute: '/login',
         routes: {

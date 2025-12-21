@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../widgets/branded_app_bar.dart';
 
 /// Route guard middleware for protecting routes based on authentication and roles
 class RouteGuard {
@@ -67,10 +68,9 @@ class RouteGuard {
   /// Build unauthorized access page
   static Widget _buildUnauthorizedPage(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Unauthorized'),
-        backgroundColor: Colors.red,
-        foregroundColor: Colors.white,
+      appBar: const BrandedAppBar(
+        title: Text('Unauthorized'),
+        foregroundColor: Colors.red,
       ),
       body: Center(
         child: Column(

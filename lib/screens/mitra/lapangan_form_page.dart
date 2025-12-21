@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class LapanganFormPage extends StatefulWidget {
   final Map<String, dynamic>? lapangan; // For editing
@@ -224,12 +225,10 @@ class _LapanganFormPageState extends State<LapanganFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BrandedAppBar(
         title: Text(
           widget.lapangan != null ? 'Edit Lapangan' : 'Tambah Lapangan',
         ),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
       ),
       body: _isLoadingVenues
           ? const Center(child: CircularProgressIndicator())

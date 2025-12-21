@@ -6,6 +6,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/config.dart';
+import '../../widgets/branded_app_bar.dart';
 
 class _CheckoutSession {
   final int id;
@@ -765,11 +766,7 @@ class _BookingCheckoutPageState extends State<BookingCheckoutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: const Text('Checkout'),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-      ),
+      appBar: const BrandedAppBar(title: Text('Checkout')),
       body: _isLoading
           ? _buildLoading()
           : _error.isNotEmpty

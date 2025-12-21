@@ -6,6 +6,7 @@ import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:lapangin_mobile/screens/mitra/venue_form_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class VenuesPage extends StatefulWidget {
   const VenuesPage({super.key});
@@ -183,12 +184,7 @@ class _VenuesPageState extends State<VenuesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
-        title: const Text('Kelola Venue'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      appBar: const BrandedAppBar(title: Text('Kelola Venue'), elevation: 0),
       body: Column(
         children: [
           // Search Bar

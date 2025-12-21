@@ -1,9 +1,9 @@
-import 'dart:ui';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../constants/api_constants.dart';
+import '../widgets/app_logo.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -178,7 +178,9 @@ class _RegisterPageState extends State<RegisterPage> {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
           ),
-          child: const Icon(Icons.sports_soccer, size: 48, color: Colors.white),
+          child: const Center(
+            child: AppLogo(size: 52, fallbackColor: Colors.white),
+          ),
         ),
         const SizedBox(height: 24),
 

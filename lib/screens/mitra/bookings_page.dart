@@ -3,6 +3,7 @@ import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:lapangin_mobile/screens/mitra/booking_detail_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class BookingsPage extends StatefulWidget {
   const BookingsPage({super.key});
@@ -180,11 +181,7 @@ class _BookingsPageState extends State<BookingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kelola Booking'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
-      ),
+      appBar: const BrandedAppBar(title: Text('Kelola Booking')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(

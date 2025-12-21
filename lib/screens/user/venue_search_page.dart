@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../config/config.dart';
 import '../../constants/app_theme.dart';
 import '../../models/venue.dart';
+import '../../widgets/branded_app_bar.dart';
 import 'venue_detail_page.dart';
 import 'venue_list_page.dart';
 
@@ -139,7 +140,7 @@ class _VenueSearchPageState extends State<VenueSearchPage> {
     final q = _controller.text.trim();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cari Venue')),
+      appBar: const BrandedAppBar(title: Text('Cari Venue')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../../config/config.dart';
+import '../../widgets/branded_app_bar.dart';
 
 class BookingHistoryPage extends StatefulWidget {
   const BookingHistoryPage({super.key});
@@ -117,12 +118,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Riwayat Booking'),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
+      appBar: const BrandedAppBar(title: Text('Riwayat Booking'), elevation: 0),
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
           : _error != null

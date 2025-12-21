@@ -4,6 +4,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../../config/config.dart';
 import '../../models/venue_model.dart';
 import '../../services/admin_mitra_service.dart';
+import '../../widgets/branded_app_bar.dart';
 
 class AdminMitraDetailPage extends StatefulWidget {
   final String mitraId;
@@ -175,10 +176,8 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BrandedAppBar(
         title: Text('Detail - ${widget.mitraName}'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: _buildBody(),

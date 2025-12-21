@@ -1,10 +1,10 @@
-﻿import 'dart:ui';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import '../services/auth_service.dart';
+import '../widgets/app_logo.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -142,7 +142,9 @@ class _LoginPageState extends State<LoginPage> {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
           ),
-          child: const Icon(Icons.sports_soccer, size: 48, color: Colors.white),
+          child: const Center(
+            child: AppLogo(size: 52, fallbackColor: Colors.white),
+          ),
         ),
         const SizedBox(height: 24),
 
