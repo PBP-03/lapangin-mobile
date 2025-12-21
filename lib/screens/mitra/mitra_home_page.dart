@@ -7,10 +7,6 @@ import 'package:lapangin_mobile/screens/mitra/pendapatan_page.dart';
 import 'package:lapangin_mobile/screens/mitra/venues_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:pbp_django_auth/pbp_django_auth.dart';
-import '../../providers/user_provider.dart';
-import '../../constants/api_constants.dart';
-import 'venues_page.dart';
 
 class MitraHomePage extends StatefulWidget {
   const MitraHomePage({super.key});
@@ -31,6 +27,7 @@ class _MitraHomePageState extends State<MitraHomePage> {
   }
 
   Future<void> _loadDashboardData() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -43,20 +40,16 @@ class _MitraHomePageState extends State<MitraHomePage> {
       );
 
       if (response['success'] == true) {
+        if (!mounted) return;
         setState(() {
           _dashboardData = response['data'];
           _isLoading = false;
         });
-        // print('✅ Dashboard data loaded');
-        // print(
-        //   '📊 Total venues: ${(_dashboardData?['venues'] as List?)?.length}',
-        // );
-        // print('📊 Venues data: ${_dashboardData?['venues']}');
       } else {
         throw Exception(response['message'] ?? 'Failed to load dashboard');
       }
     } catch (e) {
-      print('❌ Error loading dashboard: $e');
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
@@ -231,7 +224,6 @@ class _MitraHomePageState extends State<MitraHomePage> {
                               Colors.green,
                             ),
                           ),
-                          const SizedBox(width: 12),
                         ],
                       ),
                       const SizedBox(height: 24),

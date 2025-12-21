@@ -30,6 +30,7 @@ class _PendapatanPageState extends State<PendapatanPage> {
   }
 
   Future<void> _loadPendapatan() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
@@ -39,6 +40,7 @@ class _PendapatanPageState extends State<PendapatanPage> {
       final response = await request.get(url);
 
       if (response['success'] == true) {
+        if (!mounted) return;
         setState(() {
           final stats = response['data']['statistics'];
           _stats = {
@@ -84,12 +86,11 @@ class _PendapatanPageState extends State<PendapatanPage> {
 
           _isLoading = false;
         });
-        print('✅ Loaded revenue data from API');
       } else {
         throw Exception(response['message'] ?? 'Failed to load revenue data');
       }
     } catch (e) {
-      print('❌ Error loading pendapatan: $e');
+      if (!mounted) return;
       setState(() {
         _stats = {
           'total_pendapatan': 0,
@@ -100,11 +101,9 @@ class _PendapatanPageState extends State<PendapatanPage> {
         _transactions = [];
         _isLoading = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading revenue: $e')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading revenue: $e')));
     }
   }
 

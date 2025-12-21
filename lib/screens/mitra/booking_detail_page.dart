@@ -24,6 +24,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   }
 
   Future<void> _loadBookingDetail() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -36,6 +37,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       );
 
       if (response['success'] == true) {
+        if (!mounted) return;
         setState(() {
           _booking = response['data'];
           _isLoading = false;
@@ -44,6 +46,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         throw Exception(response['message'] ?? 'Failed to load booking');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
@@ -111,9 +114,14 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     }
   }
 
-  String _formatCurrency(String amount) {
-    final number = double.tryParse(amount) ?? 0;
+  String _formatCurrency(dynamic amount) {
+    final number = double.tryParse(amount?.toString() ?? '') ?? 0;
     return 'Rp ${number.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+
+  String _displayValue(dynamic value) {
+    final text = value?.toString() ?? '';
+    return text.isEmpty ? '-' : text;
   }
 
   @override
@@ -143,6 +151,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                 ],
               ),
             )
+          : _booking == null
+          ? const Center(child: Text('Booking tidak ditemukan'))
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,35 +200,34 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
                   // Booking Information
                   _buildSection('Informasi Booking', [
-                    _buildInfoRow(
-                      Icons.receipt,
-                      'ID Booking',
-                      _booking!['id'].toString().substring(0, 8),
-                    ),
+                    _buildInfoRow(Icons.receipt, 'ID Booking', () {
+                      final id = _booking!['id']?.toString() ?? '';
+                      return id.length > 8 ? id.substring(0, 8) : id;
+                    }()),
                     _buildInfoRow(
                       Icons.business,
                       'Venue',
-                      _booking!['venue_name'],
+                      _displayValue(_booking!['venue_name']),
                     ),
                     _buildInfoRow(
                       Icons.sports_soccer,
                       'Lapangan',
-                      _booking!['court_name'],
+                      _displayValue(_booking!['court_name']),
                     ),
                     _buildInfoRow(
                       Icons.calendar_today,
                       'Tanggal',
-                      _booking!['booking_date'],
+                      _displayValue(_booking!['booking_date']),
                     ),
                     _buildInfoRow(
                       Icons.access_time,
                       'Waktu',
-                      '${_booking!['start_time']} - ${_booking!['end_time']}',
+                      '${_displayValue(_booking!['start_time'])} - ${_displayValue(_booking!['end_time'])}',
                     ),
                     _buildInfoRow(
                       Icons.timer,
                       'Durasi',
-                      '${_booking!['duration_hours']} jam',
+                      '${_displayValue(_booking!['duration_hours'])} jam',
                     ),
                     _buildInfoRow(
                       Icons.attach_money,
@@ -233,17 +242,17 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                     _buildInfoRow(
                       Icons.person,
                       'Nama',
-                      _booking!['customer_name'],
+                      _displayValue(_booking!['customer_name']),
                     ),
                     _buildInfoRow(
                       Icons.email,
                       'Email',
-                      _booking!['customer_email'],
+                      _displayValue(_booking!['customer_email']),
                     ),
                     _buildInfoRow(
                       Icons.phone,
                       'Telepon',
-                      _booking!['customer_phone'] ?? '-',
+                      _displayValue(_booking!['customer_phone']),
                     ),
                   ]),
 

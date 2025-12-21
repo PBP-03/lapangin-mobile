@@ -25,6 +25,7 @@ class _VenuesPageState extends State<VenuesPage> {
   }
 
   Future<void> _loadVenues() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
@@ -32,11 +33,9 @@ class _VenuesPageState extends State<VenuesPage> {
       final response = await request.get('${ApiConstants.baseUrl}/api/venues/');
 
       if (response['success'] == true) {
+        if (!mounted) return;
         setState(() {
           _venues = (response['data'] as List).map((venue) {
-            print('🔍 Venue: ${venue['name']}');
-            print('   Description: ${venue['description']}');
-            print('   Facilities: ${venue['facilities']}');
             return {
               'id': venue['id'],
               'name': venue['name'],
@@ -50,16 +49,19 @@ class _VenuesPageState extends State<VenuesPage> {
               'verification_status': venue['verification_status'] ?? 'pending',
             };
           }).toList();
-          _isLoading = false;
         });
+      } else {
+        throw Exception(response['message'] ?? 'Gagal memuat venue');
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
     }
   }
 
@@ -753,21 +755,20 @@ class _VenuesPageState extends State<VenuesPage> {
 
         if (response['success'] == true) {
           await _loadVenues();
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Text(response['message'] ?? 'Venue berhasil dihapus'),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text(response['message'] ?? 'Venue berhasil dihapus'),
+                ],
               ),
-            );
-          }
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         } else {
           throw Exception(response['message'] ?? 'Gagal menghapus venue');
         }

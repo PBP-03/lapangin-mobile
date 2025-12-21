@@ -31,6 +31,7 @@ class _BookingsPageState extends State<BookingsPage> {
   }
 
   Future<void> _loadBookings() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
@@ -40,6 +41,7 @@ class _BookingsPageState extends State<BookingsPage> {
       );
 
       if (response['success'] == true) {
+        if (!mounted) return;
         setState(() {
           _bookings = (response['data']['bookings'] as List).map((booking) {
             return {
@@ -81,21 +83,18 @@ class _BookingsPageState extends State<BookingsPage> {
 
           _isLoading = false;
         });
-        print('✅ Loaded ${_bookings.length} bookings from API');
       } else {
         throw Exception(response['message'] ?? 'Failed to load bookings');
       }
     } catch (e) {
-      print('❌ Error loading bookings: $e');
+      if (!mounted) return;
       setState(() {
         _bookings = [];
         _isLoading = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading bookings: $e')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading bookings: $e')));
     }
   }
 

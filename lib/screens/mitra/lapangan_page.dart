@@ -71,6 +71,12 @@ class _LapanganPageState extends State<LapanganPage> {
     _loadLapangan();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadVenues() async {
     try {
       final request = context.read<CookieRequest>();
@@ -85,9 +91,7 @@ class _LapanganPageState extends State<LapanganPage> {
           });
         }
       }
-    } catch (e) {
-      print('❌ Error loading venues: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> _loadLapangan() async {
@@ -125,12 +129,10 @@ class _LapanganPageState extends State<LapanganPage> {
             _isLoading = false;
           });
         }
-        print('✅ Loaded ${_lapangan.length} courts from API');
       } else {
         throw Exception(response['message'] ?? 'Failed to load courts');
       }
     } catch (e) {
-      print('❌ Error loading lapangan: $e');
       if (mounted) {
         setState(() {
           _lapangan = [];
@@ -174,6 +176,7 @@ class _LapanganPageState extends State<LapanganPage> {
         if (response['success'] == true) {
           if (mounted) {
             await _loadLapangan();
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Lapangan berhasil dihapus'),
@@ -654,6 +657,7 @@ class _LapanganPageState extends State<LapanganPage> {
 
     // Load sessions
     List<Map<String, dynamic>> sessions = [];
+    String? loadError;
     try {
       final response = await request.get(
         '${ApiConstants.baseUrl}/api/courts/${court['id']}/sessions/',
@@ -663,19 +667,21 @@ class _LapanganPageState extends State<LapanganPage> {
         sessions = (response['data'] as List)
             .map((session) => Map<String, dynamic>.from(session))
             .toList();
-        print('Initial sessions loaded: $sessions');
-        print('Court price_per_hour: ${court['price_per_hour']}');
-        print('Court object keys: ${court.keys}');
-        if (sessions.isNotEmpty) {
-          print('First session price: ${sessions[0]['price']}');
-          print('First session keys: ${sessions[0].keys}');
-        }
       }
     } catch (e) {
-      print('Error loading sessions: $e');
+      loadError = e.toString();
     }
 
     if (!mounted) return;
+
+    if (loadError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memuat jadwal: $loadError'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
 
     // Capture class members before entering dialog context
     final daysOfWeek = _daysOfWeek;
@@ -773,7 +779,7 @@ class _LapanganPageState extends State<LapanganPage> {
                                 });
                               }
                             } catch (e) {
-                              print('Error reloading: $e');
+                              // Ignore reload error; dialog can be refreshed later.
                             }
                           },
                           tooltip: 'Tambah Jadwal',
@@ -937,9 +943,6 @@ class _LapanganPageState extends State<LapanganPage> {
                                                       );
                                                   if (response['success'] ==
                                                       true) {
-                                                    print(
-                                                      'Sessions after edit reload: ${response['data']}',
-                                                    );
                                                     setDialogState(() {
                                                       sessions =
                                                           (response['data']
@@ -955,9 +958,7 @@ class _LapanganPageState extends State<LapanganPage> {
                                                     });
                                                   }
                                                 } catch (e) {
-                                                  print(
-                                                    'Error reloading after edit: $e',
-                                                  );
+                                                  // Ignore reload error; dialog can be refreshed later.
                                                 }
                                               },
                                             ),
@@ -997,7 +998,7 @@ class _LapanganPageState extends State<LapanganPage> {
                                                     });
                                                   }
                                                 } catch (e) {
-                                                  print('Error: $e');
+                                                  // Ignore reload error; dialog can be refreshed later.
                                                 }
                                               },
                                             ),
@@ -1133,6 +1134,7 @@ class _LapanganPageState extends State<LapanganPage> {
                   );
 
                   if (response['success'] == true) {
+                    if (!mounted) return;
                     Navigator.pop(context);
                     ScaffoldMessenger.of(parentContext).showSnackBar(
                       const SnackBar(
@@ -1268,6 +1270,7 @@ class _LapanganPageState extends State<LapanganPage> {
                   );
 
                   if (response['success'] == true) {
+                    if (!mounted) return;
                     Navigator.pop(context);
                     ScaffoldMessenger.of(parentContext).showSnackBar(
                       const SnackBar(
@@ -1338,6 +1341,7 @@ class _LapanganPageState extends State<LapanganPage> {
         );
 
         if (response['success'] == true) {
+          if (!mounted) return;
           ScaffoldMessenger.of(parentContext).showSnackBar(
             const SnackBar(
               content: Text('Jadwal berhasil dihapus'),
@@ -1348,6 +1352,7 @@ class _LapanganPageState extends State<LapanganPage> {
           throw Exception(response['message'] ?? 'Failed to delete session');
         }
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(parentContext).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
