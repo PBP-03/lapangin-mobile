@@ -1,6 +1,7 @@
 class AppConfig {
   // API Base URL - Change this to your Django backend URL
-  static const String baseUrl = 'http://127.0.0.1:8000';
+  // static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String baseUrl = 'https://muhammad-fauzan44-lapangin.pbp.cs.ui.ac.id';
 
   // For production, use the deployed URL
   // static const String baseUrl = 'https://muhammad-fauzan44-lapangin.pbp.cs.ui.ac.id';

@@ -21,19 +21,21 @@ class ReviewService {
     }
   }
 
-  Future<Map<String, dynamic>> createReview({
-    required String bookingId,
+  Future<Map<String, dynamic>> createVenueReview({
+    required String venueId,
     required int rating,
     String? comment,
   }) async {
     try {
-      final body = {
-        'booking': bookingId,
+      final body = <String, dynamic>{
         'rating': rating,
-        if (comment != null) 'comment': comment,
+        'comment': comment ?? '',
       };
 
-      final response = await _apiService.post('/api/reviews/', body: body);
+      final response = await _apiService.post(
+        '${AppConfig.reviewsEndpoint}$venueId/reviews/',
+        body: body,
+      );
       return response;
     } catch (e) {
       rethrow;
