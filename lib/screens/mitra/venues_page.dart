@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:lapangin_mobile/config/config.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
@@ -17,6 +18,111 @@ class _VenuesPageState extends State<VenuesPage> {
   List<Map<String, dynamic>> _venues = [];
   bool _isLoading = false;
   String _searchQuery = '';
+
+  bool _isBase64DataImageUrl(String url) {
+    return url.startsWith('data:image/');
+  }
+
+  Uint8List? _tryDecodeBase64DataImage(String url) {
+    try {
+      final commaIndex = url.indexOf(',');
+      if (commaIndex == -1 || commaIndex == url.length - 1) return null;
+
+      final base64Part = url.substring(commaIndex + 1);
+      return base64Decode(base64Part);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Widget _buildImagePlaceholder({required double height, double? width}) {
+    return Container(
+      height: height,
+      width: width,
+      color: Colors.grey[300],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.broken_image, size: 48, color: Colors.grey),
+          const SizedBox(height: 8),
+          Text(
+            'Gambar tidak tersedia',
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVenueImage({
+    required String url,
+    required double height,
+    double? width,
+    required BoxFit fit,
+  }) {
+    if (url.isEmpty) {
+      return Container(
+        height: height,
+        width: width,
+        color: Colors.grey[300],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_not_supported, size: 48, color: Colors.grey[600]),
+            const SizedBox(height: 8),
+            Text(
+              'Belum ada foto',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_isBase64DataImageUrl(url)) {
+      final bytes = _tryDecodeBase64DataImage(url);
+      if (bytes == null) {
+        return _buildImagePlaceholder(height: height, width: width);
+      }
+
+      return Image.memory(
+        bytes,
+        height: height,
+        width: width,
+        fit: fit,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) {
+          return _buildImagePlaceholder(height: height, width: width);
+        },
+      );
+    }
+
+    return Image.network(
+      AppConfig.buildProxyImageUrl(url),
+      height: height,
+      width: width,
+      fit: fit,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          height: height,
+          width: width,
+          color: Colors.grey[200],
+          child: Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (_, __, ___) {
+        return _buildImagePlaceholder(height: height, width: width);
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -210,75 +316,12 @@ class _VenuesPageState extends State<VenuesPage> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
-                child: imageUrl.isNotEmpty
-                    ? Image.network(
-                        AppConfig.buildProxyImageUrl(imageUrl),
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 180,
-                            color: Colors.grey[200],
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value:
-                                    loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 180,
-                            color: Colors.grey[300],
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.broken_image,
-                                  size: 48,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Gambar tidak tersedia',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        height: 180,
-                        color: Colors.grey[300],
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.image_not_supported,
-                              size: 48,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Belum ada foto',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                child: _buildVenueImage(
+                  url: imageUrl,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
               ),
               // Status Badge
               Positioned(top: 12, right: 12, child: _buildStatusBadge(status)),
@@ -544,23 +587,17 @@ class _VenuesPageState extends State<VenuesPage> {
                           scrollDirection: Axis.horizontal,
                           itemCount: images.length,
                           itemBuilder: (context, index) {
+                            final imageUrl =
+                                (images[index]['url'] ?? '') as String;
                             return Container(
                               margin: const EdgeInsets.only(right: 12),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  AppConfig.buildProxyImageUrl(
-                                    images[index]['url'],
-                                  ),
-                                  width: 160,
+                                child: _buildVenueImage(
+                                  url: imageUrl,
                                   height: 120,
+                                  width: 160,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    width: 160,
-                                    height: 120,
-                                    color: Colors.grey[300],
-                                    child: const Icon(Icons.image),
-                                  ),
                                 ),
                               ),
                             );
