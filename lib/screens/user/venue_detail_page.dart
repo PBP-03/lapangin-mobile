@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../../config/config.dart';
 import '../../models/venue_detail.dart';
+import '../../providers/user_provider.dart';
 import 'booking_checkout_page.dart';
 
 class _AvailableCourtSession {
@@ -35,6 +37,37 @@ class _AvailableCourtSession {
   }
 }
 
+class _VenueReview {
+  final int id;
+  final String user;
+  final int rating;
+  final String? comment;
+  final String createdAt;
+
+  const _VenueReview({
+    required this.id,
+    required this.user,
+    required this.rating,
+    required this.comment,
+    required this.createdAt,
+  });
+
+  factory _VenueReview.fromJson(Map<String, dynamic> json) {
+    final idRaw = json['id'];
+    final ratingRaw = json['rating'];
+
+    return _VenueReview(
+      id: idRaw is num ? idRaw.toInt() : int.tryParse(idRaw.toString()) ?? 0,
+      user: (json['user'] ?? '').toString(),
+      rating: ratingRaw is num
+          ? ratingRaw.toInt()
+          : int.tryParse(ratingRaw.toString()) ?? 0,
+      comment: json['comment']?.toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
+    );
+  }
+}
+
 class VenueDetailPage extends StatefulWidget {
   final String venueId;
 
@@ -59,6 +92,12 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   List<_AvailableCourtSession> _availableSessions = const [];
   final Set<int> _selectedSessionIds = <int>{};
   double _pricePerHour = 0;
+
+  bool _isSubmittingReview = false;
+
+  bool _isReviewsLoading = false;
+  String _reviewsError = '';
+  List<_VenueReview> _venueReviews = const [];
 
   @override
   void initState() {
@@ -314,6 +353,60 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
     if (_hasFetchedVenueDetail) return;
     _hasFetchedVenueDetail = true;
     fetchVenueDetail();
+    _loadVenueReviews();
+  }
+
+  Future<void> _loadVenueReviews() async {
+    setState(() {
+      _isReviewsLoading = true;
+      _reviewsError = '';
+    });
+
+    try {
+      final request = context.read<CookieRequest>();
+      final url = '${AppConfig.baseUrl}/api/venues/${widget.venueId}/reviews/';
+      final response = await request.get(url);
+
+      if (!mounted) return;
+
+      List<dynamic> rawList = const [];
+      if (response is Map) {
+        if (response['status'] == 'success') {
+          final data = response['data'];
+          if (data is Map && data['reviews'] is List) {
+            rawList = data['reviews'] as List;
+          }
+        } else if (response['reviews'] is List) {
+          rawList = response['reviews'] as List;
+        } else if (response['data'] is List) {
+          rawList = response['data'] as List;
+        }
+      }
+
+      final reviews = rawList
+          .whereType<Map>()
+          .map((r) => _VenueReview.fromJson(Map<String, dynamic>.from(r)))
+          .where((r) => r.id != 0)
+          .toList();
+
+      setState(() {
+        _venueReviews = reviews;
+        _isReviewsLoading = false;
+        _reviewsError = '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isReviewsLoading = false;
+        _reviewsError = 'Failed to load reviews: $e';
+      });
+    }
+  }
+
+  bool _hasMyReview() {
+    final username = context.read<UserProvider>().user?.username;
+    if (username == null || username.isEmpty) return false;
+    return _venueReviews.any((r) => r.user == username);
   }
 
   Future<void> fetchVenueDetail() async {
@@ -379,6 +472,423 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
     );
   }
 
+  Future<void> _showWriteReviewDialog() async {
+    final request = context.read<CookieRequest>();
+    final userProvider = context.read<UserProvider>();
+    if (!userProvider.isLoggedIn) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan login untuk menulis review')),
+      );
+      return;
+    }
+
+    if (_hasMyReview()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kamu sudah memberikan review untuk venue ini'),
+        ),
+      );
+      return;
+    }
+
+    int rating = 0;
+    final commentController = TextEditingController();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Write a Review'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Rating',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: List.generate(5, (index) {
+                      final starIndex = index + 1;
+                      final filled = starIndex <= rating;
+                      return IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        onPressed: _isSubmittingReview
+                            ? null
+                            : () {
+                                setDialogState(() {
+                                  rating = starIndex;
+                                });
+                              },
+                        icon: Icon(
+                          Icons.star,
+                          color: filled ? Colors.amber : Colors.grey[300],
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: commentController,
+                    minLines: 3,
+                    maxLines: 5,
+                    decoration: const InputDecoration(
+                      labelText: 'Komentar (opsional)',
+                      border: OutlineInputBorder(),
+                    ),
+                    enabled: !_isSubmittingReview,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: _isSubmittingReview
+                      ? null
+                      : () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: _isSubmittingReview
+                      ? null
+                      : () async {
+                          if (rating <= 0) {
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Pilih rating terlebih dahulu'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          setState(() {
+                            _isSubmittingReview = true;
+                          });
+
+                          try {
+                            final url =
+                                '${AppConfig.baseUrl}/api/venues/${widget.venueId}/reviews/';
+                            final response = await request.postJson(
+                              url,
+                              jsonEncode({
+                                'rating': rating,
+                                'comment': commentController.text,
+                              }),
+                            );
+
+                            if (!mounted) return;
+
+                            final status = (response is Map)
+                                ? response['status']
+                                : null;
+                            if (status == 'success') {
+                              Navigator.pop(this.context);
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    response['message'] ??
+                                        'Review berhasil ditambahkan',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              await _loadVenueReviews();
+                              await fetchVenueDetail();
+                            } else {
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    (response is Map &&
+                                            response['message'] != null)
+                                        ? response['message'].toString()
+                                        : 'Gagal menambahkan review',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal menambahkan review: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          } finally {
+                            if (mounted) {
+                              setState(() {
+                                _isSubmittingReview = false;
+                              });
+                            }
+                          }
+                        },
+                  child: _isSubmittingReview
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    commentController.dispose();
+  }
+
+  Future<void> _showEditReviewDialog(_VenueReview review) async {
+    final userProvider = context.read<UserProvider>();
+    if (!userProvider.isLoggedIn) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan login untuk mengedit review')),
+      );
+      return;
+    }
+
+    int rating = review.rating;
+    final commentController = TextEditingController(text: review.comment ?? '');
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Edit Review'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Rating',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: List.generate(5, (index) {
+                      final starIndex = index + 1;
+                      final filled = starIndex <= rating;
+                      return IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        onPressed: _isSubmittingReview
+                            ? null
+                            : () {
+                                setDialogState(() {
+                                  rating = starIndex;
+                                });
+                              },
+                        icon: Icon(
+                          Icons.star,
+                          color: filled ? Colors.amber : Colors.grey[300],
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: commentController,
+                    minLines: 3,
+                    maxLines: 5,
+                    decoration: const InputDecoration(
+                      labelText: 'Komentar (opsional)',
+                      border: OutlineInputBorder(),
+                    ),
+                    enabled: !_isSubmittingReview,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: _isSubmittingReview
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: _isSubmittingReview
+                      ? null
+                      : () async {
+                          if (rating <= 0) {
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Pilih rating terlebih dahulu'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          setState(() {
+                            _isSubmittingReview = true;
+                          });
+
+                          try {
+                            final request = context.read<CookieRequest>();
+                            final url =
+                                '${AppConfig.baseUrl}/api/reviews/${review.id}/update/';
+                            final resp = await request.postJson(
+                              url,
+                              jsonEncode({
+                                'rating': rating,
+                                'comment': commentController.text,
+                              }),
+                            );
+
+                            if (!mounted) return;
+
+                            if (resp is Map && resp['status'] == 'success') {
+                              Navigator.pop(dialogContext);
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    resp['message'] ??
+                                        'Review berhasil diupdate',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              await _loadVenueReviews();
+                              await fetchVenueDetail();
+                            } else {
+                              ScaffoldMessenger.of(this.context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    (resp is Map && resp['message'] != null)
+                                        ? resp['message'].toString()
+                                        : 'Gagal mengupdate review',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal mengupdate review: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          } finally {
+                            if (mounted) {
+                              setState(() {
+                                _isSubmittingReview = false;
+                              });
+                            }
+                          }
+                        },
+                  child: _isSubmittingReview
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    commentController.dispose();
+  }
+
+  Future<void> _confirmAndDeleteReview(_VenueReview review) async {
+    final userProvider = context.read<UserProvider>();
+    if (!userProvider.isLoggedIn) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan login untuk menghapus review')),
+      );
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Hapus Review'),
+          content: const Text('Yakin ingin menghapus review ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isSubmittingReview = true;
+    });
+
+    try {
+      final request = context.read<CookieRequest>();
+      final url = '${AppConfig.baseUrl}/api/reviews/${review.id}/delete/';
+      final resp = await request.postJson(url, jsonEncode({}));
+
+      if (!mounted) return;
+
+      if (resp is Map && resp['status'] == 'success') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(resp['message'] ?? 'Review berhasil dihapus'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _loadVenueReviews();
+        await fetchVenueDetail();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              (resp is Map && resp['message'] != null)
+                  ? resp['message'].toString()
+                  : 'Gagal menghapus review',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus review: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingReview = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -387,6 +897,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
         onRefresh: () async {
           await fetchVenueDetail();
           await _loadCourtSessions();
+          await _loadVenueReviews();
         },
         child: isLoading
             ? LayoutBuilder(
@@ -1320,6 +1831,11 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   }
 
   Widget _buildReviews() {
+    final isLoggedIn = context.watch<UserProvider>().isLoggedIn;
+    final currentUsername = context.watch<UserProvider>().user?.username;
+    final hasMyReview = isLoggedIn && (currentUsername?.isNotEmpty ?? false)
+        ? _venueReviews.any((r) => r.user == currentUsername)
+        : false;
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
@@ -1343,22 +1859,64 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Reviews',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Reviews',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+              ),
+              if (isLoggedIn)
+                FilledButton(
+                  onPressed: (hasMyReview || _isSubmittingReview)
+                      ? null
+                      : _showWriteReviewDialog,
+                  child: Text(hasMyReview ? 'Sudah review' : 'Write Review'),
+                )
+              else
+                OutlinedButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Silakan login untuk menulis review'),
+                      ),
+                    );
+                  },
+                  child: const Text('Login to Review'),
+                ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
-            '${venueDetail!.reviews.length} reviews • ${venueDetail!.avgRating.toStringAsFixed(1)} average rating',
+            '${_venueReviews.length} reviews • ${venueDetail!.avgRating.toStringAsFixed(1)} average rating',
             style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 20),
-          if (venueDetail!.reviews.isEmpty)
+          if (_isReviewsLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_reviewsError.isNotEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  _reviewsError,
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          else if (_venueReviews.isEmpty)
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(20),
@@ -1372,12 +1930,11 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: venueDetail!.reviews.length > 5
-                  ? 5
-                  : venueDetail!.reviews.length,
+              itemCount: _venueReviews.length > 5 ? 5 : _venueReviews.length,
               separatorBuilder: (context, index) => const Divider(height: 24),
               itemBuilder: (context, index) {
-                final review = venueDetail!.reviews[index];
+                final review = _venueReviews[index];
+                final isMine = isLoggedIn && (currentUsername == review.user);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1388,7 +1945,9 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                             context,
                           ).colorScheme.primary,
                           child: Text(
-                            review.user[0].toUpperCase(),
+                            review.user.isNotEmpty
+                                ? review.user[0].toUpperCase()
+                                : '?',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -1422,9 +1981,9 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  if (review.createdAt != null)
+                                  if (review.createdAt.isNotEmpty)
                                     Text(
-                                      _formatDate(review.createdAt!),
+                                      _formatDate(review.createdAt),
                                       style: const TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey,
@@ -1435,6 +1994,29 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                             ],
                           ),
                         ),
+                        if (isMine)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Edit',
+                                onPressed: _isSubmittingReview
+                                    ? null
+                                    : () => _showEditReviewDialog(review),
+                                icon: const Icon(Icons.edit, size: 18),
+                              ),
+                              IconButton(
+                                tooltip: 'Delete',
+                                onPressed: _isSubmittingReview
+                                    ? null
+                                    : () => _confirmAndDeleteReview(review),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                     if (review.comment != null &&
@@ -1451,7 +2033,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                 );
               },
             ),
-          if (venueDetail!.reviews.length > 5) ...[
+          if (_venueReviews.length > 5) ...[
             const SizedBox(height: 12),
             Center(
               child: TextButton(
