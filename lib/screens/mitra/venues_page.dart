@@ -232,20 +232,47 @@ class _VenuesPageState extends State<VenuesPage> {
 
           // Venue List
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredVenues.isEmpty
-                ? _buildEmptyState()
-                : RefreshIndicator(
-                    onRefresh: _loadVenues,
-                    child: ListView.builder(
+            child: RefreshIndicator(
+              onRefresh: _loadVenues,
+              child: _isLoading
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : _filteredVenues.isEmpty
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: _buildEmptyState(),
+                          ),
+                        );
+                      },
+                    )
+                  : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(16),
                       itemCount: _filteredVenues.length,
                       itemBuilder: (context, index) {
                         return _buildVenueCard(_filteredVenues[index]);
                       },
                     ),
-                  ),
+            ),
           ),
         ],
       ),

@@ -767,22 +767,50 @@ class _BookingCheckoutPageState extends State<BookingCheckoutPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: const BrandedAppBar(title: Text('Checkout')),
-      body: _isLoading
-          ? _buildLoading()
-          : _error.isNotEmpty
-          ? _buildError()
-          : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
-              child: Column(
-                children: [
-                  _summaryCard(),
-                  const SizedBox(height: 14),
-                  _sessionsCard(),
-                  const SizedBox(height: 14),
-                  _paymentCard(),
-                ],
+      body: RefreshIndicator(
+        onRefresh: _loadCheckoutData,
+        child: _isLoading
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: _buildLoading(),
+                    ),
+                  );
+                },
+              )
+            : _error.isNotEmpty
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: _buildError(),
+                    ),
+                  );
+                },
+              )
+            : SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+                child: Column(
+                  children: [
+                    _summaryCard(),
+                    const SizedBox(height: 14),
+                    _sessionsCard(),
+                    const SizedBox(height: 14),
+                    _paymentCard(),
+                  ],
+                ),
               ),
-            ),
+      ),
       bottomNavigationBar: _isLoading || _error.isNotEmpty
           ? null
           : _bottomBar(),

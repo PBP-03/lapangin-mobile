@@ -204,11 +204,40 @@ class _LapanganPageState extends State<LapanganPage> {
         children: [
           _buildFilterBar(),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredLapangan.isEmpty
-                ? _buildEmptyState()
-                : _buildLapanganList(),
+            child: RefreshIndicator(
+              onRefresh: _loadLapangan,
+              child: _isLoading
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : _filteredLapangan.isEmpty
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: _buildEmptyState(),
+                          ),
+                        );
+                      },
+                    )
+                  : _buildLapanganList(),
+            ),
           ),
         ],
       ),
@@ -352,6 +381,7 @@ class _LapanganPageState extends State<LapanganPage> {
 
   Widget _buildLapanganList() {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: _filteredLapangan.length,
       itemBuilder: (context, index) {

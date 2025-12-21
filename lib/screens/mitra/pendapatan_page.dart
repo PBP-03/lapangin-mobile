@@ -148,13 +148,26 @@ class _PendapatanPageState extends State<PendapatanPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [_buildStatsCards(), _buildTransactionsList()],
+      body: RefreshIndicator(
+        onRefresh: _loadPendapatan,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final Widget content = _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [_buildStatsCards(), _buildTransactionsList()],
+                  );
+
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: content,
               ),
-            ),
+            );
+          },
+        ),
+      ),
     );
   }
 

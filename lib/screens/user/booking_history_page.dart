@@ -119,16 +119,60 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: const BrandedAppBar(title: Text('Riwayat Booking'), elevation: 0),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: colorScheme.primary))
-          : _error != null
-          ? _buildErrorState(context, message: _error!, onRetry: _fetchBookings)
-          : _bookings.isEmpty
-          ? _buildEmptyState(context)
-          : RefreshIndicator(
-              onRefresh: _fetchBookings,
-              color: colorScheme.primary,
-              child: CustomScrollView(
+      body: RefreshIndicator(
+        onRefresh: _fetchBookings,
+        color: colorScheme.primary,
+        child: _isLoading
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              )
+            : _error != null
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: _buildErrorState(
+                        context,
+                        message: _error!,
+                        onRetry: _fetchBookings,
+                      ),
+                    ),
+                  );
+                },
+              )
+            : _bookings.isEmpty
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: _buildEmptyState(context),
+                    ),
+                  );
+                },
+              )
+            : CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
                   // SliverToBoxAdapter(
@@ -153,7 +197,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                   ),
                 ],
               ),
-            ),
+      ),
     );
   }
 

@@ -182,21 +182,38 @@ class _BookingsPageState extends State<BookingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const BrandedAppBar(title: Text('Kelola Booking')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildStatsCards(),
-                Expanded(
-                  child: Container(
-                    color: const Color(0xFFFAFAFA),
-                    child: _filteredBookings.isEmpty
-                        ? _buildEmptyState()
-                        : _buildBookingsList(),
-                  ),
+      body: RefreshIndicator(
+        onRefresh: _loadBookings,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(child: _buildStatsCards()),
+            if (_isLoading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_filteredBookings.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Container(
+                  color: const Color(0xFFFAFAFA),
+                  child: _buildEmptyState(),
                 ),
-              ],
-            ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final booking = _filteredBookings[index];
+                    return _buildBookingCard(booking);
+                  }, childCount: _filteredBookings.length),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -352,162 +369,151 @@ class _BookingsPageState extends State<BookingsPage> {
                 ? 'Belum ada booking masuk'
                 : 'Tidak ada booking dengan status ${_getStatusLabel(_selectedStatus).toLowerCase()}',
             style: const TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBookingsList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _filteredBookings.length,
-      itemBuilder: (context, index) {
-        final booking = _filteredBookings[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 1,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
-          ),
-          child: InkWell(
-            onTap: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      BookingDetailPage(bookingId: booking['id'].toString()),
-                ),
-              );
-              // Reload bookings after returning from detail page
-              _loadBookings();
-            },
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildBookingCard(Map<String, dynamic> booking) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE5E5E5), width: 1),
+      ),
+      child: InkWell(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  BookingDetailPage(bookingId: booking['id'].toString()),
+            ),
+          );
+          _loadBookings();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              booking['user_name'],
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${booking['venue']} - ${booking['lapangan']}',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(
-                            booking['status'],
-                          ).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: _getStatusColor(booking['status']),
-                          ),
-                        ),
-                        child: Text(
-                          _getStatusLabel(booking['status']),
-                          style: TextStyle(
-                            color: _getStatusColor(booking['status']),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 24),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(booking['date']),
-                      const SizedBox(width: 16),
-                      const Icon(
-                        Icons.access_time,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(booking['time']),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.payments, size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Rp ${booking['total_price']}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF5409DA),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (booking['status'] == 'pending') ...[
-                    const SizedBox(height: 16),
-                    Row(
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => _updateBookingStatus(
-                              booking['id'].toString(),
-                              'cancelled',
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              side: const BorderSide(color: Colors.red),
-                            ),
-                            child: const Text('Tolak'),
+                        Text(
+                          booking['user_name'],
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => _updateBookingStatus(
-                              booking['id'].toString(),
-                              'confirmed',
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF5409DA),
-                            ),
-                            child: const Text('Terima'),
-                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${booking['venue']} - ${booking['lapangan']}',
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(
+                        booking['status'],
+                      ).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _getStatusColor(booking['status']),
+                      ),
+                    ),
+                    child: Text(
+                      _getStatusLabel(booking['status']),
+                      style: TextStyle(
+                        color: _getStatusColor(booking['status']),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
+              const Divider(height: 24),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(booking['date']),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Text(booking['time']),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.payments, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Rp ${booking['total_price']}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF5409DA),
+                    ),
+                  ),
+                ],
+              ),
+              if (booking['status'] == 'pending') ...[
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _updateBookingStatus(
+                          booking['id'].toString(),
+                          'cancelled',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                        ),
+                        child: const Text('Tolak'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => _updateBookingStatus(
+                          booking['id'].toString(),
+                          'confirmed',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5409DA),
+                        ),
+                        child: const Text('Terima'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

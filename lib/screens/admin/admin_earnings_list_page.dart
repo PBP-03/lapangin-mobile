@@ -239,96 +239,106 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
         elevation: 0,
         automaticallyImplyLeading: false,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? _buildErrorState()
-          : RefreshIndicator(
-              onRefresh: _loadEarnings,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    // Header Section with Title and Back Button
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Color(0xFFE5E7EB),
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: RefreshIndicator(
+        onRefresh: _loadEarnings,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorMessage != null
+                    ? _buildErrorState()
+                    : Column(
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          // Header Section with Title and Back Button
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Total Earnings Mitra',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF111827),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Total Earnings Mitra',
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF111827),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        'Monitor pendapatan seluruh mitra dan kelola refund',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Monitor pendapatan seluruh mitra dan kelola refund',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFF6B7280),
+                                const SizedBox(width: 16),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pushReplacementNamed(
+                                      context,
+                                      '/admin/home',
+                                    );
+                                  },
+                                  icon: const Icon(Icons.arrow_back, size: 20),
+                                  label: const Text('Kembali ke Dashboard'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF6B7280),
+                                    side: const BorderSide(
+                                      color: Color(0xFFD1D5DB),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.pushReplacementNamed(
-                                context,
-                                '/admin/home',
-                              );
-                            },
-                            icon: const Icon(Icons.arrow_back, size: 20),
-                            label: const Text('Kembali ke Dashboard'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF6B7280),
-                              side: const BorderSide(color: Color(0xFFD1D5DB)),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
+
+                          const SizedBox(height: 32),
+
+                          // Refunds Section
+                          _buildRefundsSection(),
+
+                          const SizedBox(height: 24),
+
+                          // Earnings Section
+                          _buildEarningsSection(),
+
+                          const SizedBox(height: 32),
                         ],
                       ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Refunds Section
-                    _buildRefundsSection(),
-
-                    const SizedBox(height: 24),
-
-                    // Earnings Section
-                    _buildEarningsSection(),
-
-                    const SizedBox(height: 32),
-                  ],
-                ),
               ),
-            ),
+            );
+          },
+        ),
+      ),
     );
   }
 

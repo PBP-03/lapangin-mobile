@@ -105,203 +105,216 @@ class _MitraHomePageState extends State<MitraHomePage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Error: $_errorMessage'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadDashboardData,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadDashboardData,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Welcome Section
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF5409DA), Color(0xFF4E71FF)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
+      body: RefreshIndicator(
+        onRefresh: _loadDashboardData,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final Widget content = _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              Icons.business,
-                              size: 48,
-                              color: Colors.white,
+                        const SizedBox(height: 16),
+                        Text('Error: $_errorMessage'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadDashboardData,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Welcome Section
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF5409DA), Color(0xFF4E71FF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Welcome, ${_dashboardData?['user']?['first_name'] ?? userProvider.user?.firstName ?? "Mitra"}!',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.business,
+                                size: 48,
                                 color: Colors.white,
                               ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Welcome, ${_dashboardData?['user']?['first_name'] ?? userProvider.user?.firstName ?? "Mitra"}!',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Kelola venue dan pantau bisnis Anda',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Statistics Cards
+                        const Text(
+                          'Statistik Bisnis',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatCard(
+                                'Total Venue',
+                                _totalVenues.toString(),
+                                Icons.business,
+                                Colors.purple,
+                              ),
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Kelola venue dan pantau bisnis Anda',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
+                            Expanded(
+                              child: _buildStatCard(
+                                'Total Lapangan',
+                                _totalCourts.toString(),
+                                Icons.sports_soccer,
+                                Colors.blue,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Statistics Cards
-                      const Text(
-                        'Statistik Bisnis',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatCard(
+                                'Rating Rata-rata',
+                                _avgRating.toStringAsFixed(1),
+                                Icons.star,
+                                Colors.amber,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildStatCard(
+                                'Total Review',
+                                _totalReviews.toString(),
+                                Icons.rate_review,
+                                Colors.green,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatCard(
-                              'Total Venue',
-                              _totalVenues.toString(),
+                        const SizedBox(height: 24),
+
+                        // Main Menu Grid
+                        const Text(
+                          'Menu Utama',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          children: [
+                            _buildMenuCard(
+                              context,
+                              'Kelola Venue',
+                              'Tambah & kelola venue',
                               Icons.business,
                               Colors.purple,
+                              () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const VenuesPage(),
+                                ),
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: _buildStatCard(
-                              'Total Lapangan',
-                              _totalCourts.toString(),
+                            _buildMenuCard(
+                              context,
+                              'Kelola Lapangan',
+                              'Atur lapangan venue',
                               Icons.sports_soccer,
                               Colors.blue,
+                              () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LapanganPage(),
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildStatCard(
-                              'Rating Rata-rata',
-                              _avgRating.toStringAsFixed(1),
-                              Icons.star,
-                              Colors.amber,
+                            _buildMenuCard(
+                              context,
+                              'Kelola Booking',
+                              'Lihat & kelola booking',
+                              Icons.calendar_today,
+                              Colors.orange,
+                              () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const BookingsPage(),
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildStatCard(
-                              'Total Review',
-                              _totalReviews.toString(),
-                              Icons.rate_review,
+                            _buildMenuCard(
+                              context,
+                              'Pendapatan',
+                              'Pantau keuangan',
+                              Icons.attach_money,
                               Colors.green,
+                              () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PendapatanPage(),
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Main Menu Grid
-                      const Text(
-                        'Menu Utama',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        children: [
-                          _buildMenuCard(
-                            context,
-                            'Kelola Venue',
-                            'Tambah & kelola venue',
-                            Icons.business,
-                            Colors.purple,
-                            () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const VenuesPage(),
-                              ),
-                            ),
-                          ),
-                          _buildMenuCard(
-                            context,
-                            'Kelola Lapangan',
-                            'Atur lapangan venue',
-                            Icons.sports_soccer,
-                            Colors.blue,
-                            () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LapanganPage(),
-                              ),
-                            ),
-                          ),
-                          _buildMenuCard(
-                            context,
-                            'Kelola Booking',
-                            'Lihat & kelola booking',
-                            Icons.calendar_today,
-                            Colors.orange,
-                            () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const BookingsPage(),
-                              ),
-                            ),
-                          ),
-                          _buildMenuCard(
-                            context,
-                            'Pendapatan',
-                            'Pantau keuangan',
-                            Icons.attach_money,
-                            Colors.green,
-                            () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PendapatanPage(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                      ],
+                    ),
+                  );
+
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: content,
               ),
-            ),
+            );
+          },
+        ),
+      ),
     );
   }
 

@@ -135,165 +135,184 @@ class _VenueSearchPageState extends State<VenueSearchPage> {
     ).push(MaterialPageRoute(builder: (_) => VenueListPage(initialSearch: q)));
   }
 
+  Future<void> _refreshSearch() async {
+    final q = _controller.text.trim();
+    if (q.length < 2) return;
+    await _performSearch(q);
+  }
+
   @override
   Widget build(BuildContext context) {
     final q = _controller.text.trim();
 
     return Scaffold(
       appBar: const BrandedAppBar(title: Text('Cari Venue')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: AppColors.divider),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        textInputAction: TextInputAction.search,
-                        onSubmitted: (_) => _openAllResults(),
-                        decoration: const InputDecoration(
-                          hintText: 'Cari venue, lokasi, atau olahraga…',
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
+      body: RefreshIndicator(
+        onRefresh: _refreshSearch,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: 6,
                     ),
-                    if (q.isNotEmpty)
-                      IconButton(
-                        tooltip: 'Hapus',
-                        onPressed: _controller.clear,
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              if (_isSearching)
-                const Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.md),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      SizedBox(width: AppSpacing.md),
-                      Expanded(child: Text('Mencari…')),
-                    ],
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            focusNode: _focusNode,
+                            textInputAction: TextInputAction.search,
+                            onSubmitted: (_) => _openAllResults(),
+                            decoration: const InputDecoration(
+                              hintText: 'Cari venue, lokasi, atau olahraga…',
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        if (q.isNotEmpty)
+                          IconButton(
+                            tooltip: 'Hapus',
+                            onPressed: _controller.clear,
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                      ],
+                    ),
                   ),
-                )
-              else if (_error.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.md),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: Theme.of(context).colorScheme.error,
+                  const SizedBox(height: AppSpacing.md),
+                  if (_isSearching)
+                    const Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.md),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: AppSpacing.md),
+                          Expanded(child: Text('Mencari…')),
+                        ],
                       ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Text(_error, style: AppTextStyles.bodyMedium),
+                    )
+                  else if (_error.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.md),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Text(
+                              _error,
+                              style: AppTextStyles.bodyMedium,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
-              else if (q.length < 2)
-                const Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.md),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Ketik minimal 2 huruf untuk mulai mencari.'),
-                  ),
-                )
-              else if (_results.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: AppSpacing.md),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Tidak ada hasil.'),
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: _results.length + 1,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      if (index == _results.length) {
+                    )
+                  else if (q.length < 2)
+                    const Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.md),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Ketik minimal 2 huruf untuk mulai mencari.',
+                        ),
+                      ),
+                    )
+                  else if (_results.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.md),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('Tidak ada hasil.'),
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _results.length + 1,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        if (index == _results.length) {
+                          return ListTile(
+                            leading: const Icon(Icons.travel_explore),
+                            title: Text('Lihat semua hasil untuk "$q"'),
+                            onTap: _openAllResults,
+                          );
+                        }
+
+                        final venue = _results[index];
+                        final imageUrl = venue.images.isNotEmpty
+                            ? venue.images.first
+                            : '';
+
                         return ListTile(
-                          leading: const Icon(Icons.travel_explore),
-                          title: Text('Lihat semua hasil untuk "$q"'),
-                          onTap: _openAllResults,
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: imageUrl.isEmpty
+                                  ? Container(
+                                      color: AppColors.primary.withOpacity(
+                                        0.10,
+                                      ),
+                                      child: const Icon(Icons.stadium_outlined),
+                                    )
+                                  : Image.network(
+                                      AppConfig.buildProxyImageUrl(imageUrl),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) {
+                                        return Container(
+                                          color: Colors.black.withOpacity(0.05),
+                                          child: const Icon(
+                                            Icons.stadium_outlined,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ),
+                          title: Text(
+                            venue.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          subtitle: Text(
+                            venue.address,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption,
+                          ),
+                          onTap: () => _openVenue(venue),
                         );
-                      }
-
-                      final venue = _results[index];
-                      final imageUrl = venue.images.isNotEmpty
-                          ? venue.images.first
-                          : '';
-
-                      return ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          child: SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: imageUrl.isEmpty
-                                ? Container(
-                                    color: AppColors.primary.withOpacity(0.10),
-                                    child: const Icon(Icons.stadium_outlined),
-                                  )
-                                : Image.network(
-                                    AppConfig.buildProxyImageUrl(imageUrl),
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) {
-                                      return Container(
-                                        color: Colors.black.withOpacity(0.05),
-                                        child: const Icon(
-                                          Icons.stadium_outlined,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                          ),
-                        ),
-                        title: Text(
-                          venue.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        subtitle: Text(
-                          venue.address,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.caption,
-                        ),
-                        onTap: () => _openVenue(venue),
-                      );
-                    },
-                  ),
-                ),
-            ],
+                      },
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

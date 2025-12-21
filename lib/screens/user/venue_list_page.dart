@@ -321,618 +321,624 @@ class _VenueListPageState extends State<VenueListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Hero Section with Enhanced Gradient
-          SliverAppBar(
-            expandedHeight: 200,
-            pinned: true,
-            backgroundColor: const Color(0xFF5409DA),
-            flexibleSpace: FlexibleSpaceBar(
-              centerTitle: true,
-              title: LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-                  final isVerySmall = width < 280;
-                  final isSmall = width < 360;
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (width > 250) ...[
-                          Text(
-                            'Discover Perfect',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: isVerySmall ? 8 : (isSmall ? 10 : 12),
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withOpacity(0.95),
-                              letterSpacing: 0.1,
-                              height: 1,
+      body: RefreshIndicator(
+        onRefresh: () => fetchVenues(page: currentPage),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // Hero Section with Enhanced Gradient
+            SliverAppBar(
+              expandedHeight: 200,
+              pinned: true,
+              backgroundColor: const Color(0xFF5409DA),
+              flexibleSpace: FlexibleSpaceBar(
+                centerTitle: true,
+                title: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth;
+                    final isVerySmall = width < 280;
+                    final isSmall = width < 360;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (width > 250) ...[
+                            Text(
+                              'Discover Perfect',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: isVerySmall ? 8 : (isSmall ? 10 : 12),
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withOpacity(0.95),
+                                letterSpacing: 0.1,
+                                height: 1,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.clip,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.clip,
+                            const SizedBox(height: 2),
+                          ],
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isVerySmall ? 4 : (isSmall ? 6 : 10),
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.white.withOpacity(0.25),
+                                  Colors.white.withOpacity(0.15),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              'Sports Venue',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: isVerySmall
+                                    ? 10
+                                    : (isSmall ? 13 : 16),
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.4,
+                                height: 1,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.clip,
+                            ),
                           ),
-                          const SizedBox(height: 2),
                         ],
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isVerySmall ? 4 : (isSmall ? 6 : 10),
-                            vertical: 3,
+                      ),
+                    );
+                  },
+                ),
+                background: Stack(
+                  children: [
+                    // Gradient background
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF5409DA), // Primary purple
+                            Color(0xFF14B8A6), // Teal
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Decorative circles
+                    Positioned(
+                      top: -100,
+                      right: -100,
+                      child: Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -50,
+                      left: -50,
+                      child: Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Enhanced Search Form with Elevated Design
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 30,
+                      offset: const Offset(0, 15),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Text(
+                          'Temukan Venue Impian Anda',
+                          style: TextStyle(
+                            fontSize: constraints.maxWidth < 300
+                                ? 16
+                                : (constraints.maxWidth < 400 ? 19 : 22),
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0F172A),
                           ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.white.withOpacity(0.25),
-                                Colors.white.withOpacity(0.15),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            'Sports Venue',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: isVerySmall ? 10 : (isSmall ? 13 : 16),
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 0.4,
-                              height: 1,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.clip,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Gunakan filter di bawah untuk menemukan lapangan yang sesuai',
+                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Search field
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Cari nama venue',
+                        hintStyle: const TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 14,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF64748B),
+                          size: 20,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                            width: 1,
                           ),
                         ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF5409DA),
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Location field
+                    TextField(
+                      controller: _locationController,
+                      decoration: InputDecoration(
+                        hintText: 'Pilih Kota',
+                        hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                        prefixIcon: const Icon(
+                          Icons.location_on,
+                          color: Color(0xFF64748B),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                            width: 2,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                            width: 2,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF5409DA),
+                            width: 2,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.8),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Category and Rating dropdowns
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth < 400) {
+                          return Column(
+                            children: [
+                              _buildCategoryDropdown(),
+                              const SizedBox(height: 16),
+                              _buildRatingDropdown(),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            Expanded(child: _buildCategoryDropdown()),
+                            const SizedBox(width: 12),
+                            Expanded(child: _buildRatingDropdown()),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Price range
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth < 400) {
+                          return Column(
+                            children: [
+                              _buildMinPriceField(),
+                              const SizedBox(height: 16),
+                              _buildMaxPriceField(),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            Expanded(child: _buildMinPriceField()),
+                            const SizedBox(width: 12),
+                            Expanded(child: _buildMaxPriceField()),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Search button with gradient
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF5409DA), Color(0xFF14B8A6)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF5409DA).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _handleSearch,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.search, color: Colors.white),
+                                  if (constraints.maxWidth > 200) ...[
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'Cari Venue Sekarang',
+                                        style: TextStyle(
+                                          fontSize: constraints.maxWidth < 250
+                                              ? 14
+                                              : 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Results Header with Enhanced Design
+            SliverToBoxAdapter(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF5409DA).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.view_list,
+                              color: Color(0xFF5409DA),
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Hasil Pencarian',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  'Menampilkan $totalCount venue tersedia',
+                                  style: const TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    DropdownButton<String>(
+                      value: sortBy,
+                      underline: Container(),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'price_low',
+                          child: Text('Harga Terendah'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'price_high',
+                          child: Text('Harga Tertinggi'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'rating',
+                          child: Text('Rating Tertinggi'),
+                        ),
                       ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            sortBy = value;
+                            _sortVenues();
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Venue Grid
+            if (isLoading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (errorMessage.isNotEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(errorMessage),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => fetchVenues(page: currentPage),
+                        child: const Text('Coba Lagi'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (venues.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Tidak ada venue ditemukan',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Coba ubah filter pencarian Anda'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _resetFilters,
+                        child: const Text('Reset Filter'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverLayoutBuilder(
+                builder: (context, constraints) {
+                  double crossAxisExtent;
+                  double spacing;
+                  double aspectRatio;
+
+                  // Responsive grid configuration - compact cards
+                  if (constraints.crossAxisExtent < 600) {
+                    // Mobile: 2 columns - compact cards
+                    crossAxisExtent = (constraints.crossAxisExtent - 48) / 2;
+                    spacing = 12;
+                    // Higher aspect ratio = less height -> avoids big empty space
+                    // while keeping the card readable on small screens.
+                    aspectRatio = 0.78;
+                  } else if (constraints.crossAxisExtent < 900) {
+                    // Tablet: 3 columns - compact cards
+                    crossAxisExtent = (constraints.crossAxisExtent - 64) / 3;
+                    spacing = 16;
+                    aspectRatio = 0.90;
+                  } else {
+                    // Desktop: 4 columns - compact cards
+                    crossAxisExtent = (constraints.crossAxisExtent - 80) / 4;
+                    spacing = 16;
+                    aspectRatio = 0.95;
+                  }
+
+                  return SliverPadding(
+                    padding: const EdgeInsets.all(16),
+                    sliver: SliverGrid(
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: crossAxisExtent,
+                        childAspectRatio: aspectRatio,
+                        mainAxisSpacing: spacing,
+                        crossAxisSpacing: spacing,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _buildVenueCard(venues[index]),
+                        childCount: venues.length,
+                      ),
                     ),
                   );
                 },
               ),
-              background: Stack(
-                children: [
-                  // Gradient background
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF5409DA), // Primary purple
-                          Color(0xFF14B8A6), // Teal
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Decorative circles
-                  Positioned(
-                    top: -100,
-                    right: -100,
-                    child: Container(
-                      width: 250,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -50,
-                    left: -50,
-                    child: Container(
-                      width: 150,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
 
-          // Enhanced Search Form with Elevated Design
-          SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 30,
-                    offset: const Offset(0, 15),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Text(
-                        'Temukan Venue Impian Anda',
-                        style: TextStyle(
-                          fontSize: constraints.maxWidth < 300
-                              ? 16
-                              : (constraints.maxWidth < 400 ? 19 : 22),
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF0F172A),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Gunakan filter di bawah untuk menemukan lapangan yang sesuai',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 20),
+            // Enhanced Pagination - Responsive
+            if (!isLoading && venues.isNotEmpty)
+              SliverToBoxAdapter(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final screenWidth = constraints.maxWidth;
+                    final isSmallScreen = screenWidth < 600;
 
-                  // Search field
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Cari nama venue',
-                      hintStyle: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 14,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Color(0xFF64748B),
-                        size: 20,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 1,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF5409DA),
-                          width: 2,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.8),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Location field
-                  TextField(
-                    controller: _locationController,
-                    decoration: InputDecoration(
-                      hintText: 'Pilih Kota',
-                      hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                      prefixIcon: const Icon(
-                        Icons.location_on,
-                        color: Color(0xFF64748B),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 2,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFE2E8F0),
-                          width: 2,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF5409DA),
-                          width: 2,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.8),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Category and Rating dropdowns
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth < 400) {
-                        return Column(
-                          children: [
-                            _buildCategoryDropdown(),
-                            const SizedBox(height: 16),
-                            _buildRatingDropdown(),
-                          ],
-                        );
-                      }
-                      return Row(
-                        children: [
-                          Expanded(child: _buildCategoryDropdown()),
-                          const SizedBox(width: 12),
-                          Expanded(child: _buildRatingDropdown()),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Price range
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      if (constraints.maxWidth < 400) {
-                        return Column(
-                          children: [
-                            _buildMinPriceField(),
-                            const SizedBox(height: 16),
-                            _buildMaxPriceField(),
-                          ],
-                        );
-                      }
-                      return Row(
-                        children: [
-                          Expanded(child: _buildMinPriceField()),
-                          const SizedBox(width: 12),
-                          Expanded(child: _buildMaxPriceField()),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Search button with gradient
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF5409DA), Color(0xFF14B8A6)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF5409DA).withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _handleSearch,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.search, color: Colors.white),
-                                if (constraints.maxWidth > 200) ...[
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      'Cari Venue Sekarang',
-                                      style: TextStyle(
-                                        fontSize: constraints.maxWidth < 250
-                                            ? 14
-                                            : 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Results Header with Enhanced Design
-          SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF5409DA).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.view_list,
-                            color: Color(0xFF5409DA),
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    return Container(
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      child: Center(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text(
-                                'Hasil Pencarian',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: Color(0xFF0F172A),
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                              // First/Previous buttons
+                              _buildPaginationIconButton(
+                                icon: Icons.keyboard_double_arrow_left,
+                                isEnabled: currentPage > 1,
+                                onPressed: () => fetchVenues(page: 1),
+                                isSmall: isSmallScreen,
                               ),
-                              Text(
-                                'Menampilkan $totalCount venue tersedia',
-                                style: const TextStyle(
-                                  color: Color(0xFF64748B),
-                                  fontSize: 12,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                              SizedBox(width: isSmallScreen ? 4 : 8),
+                              _buildPaginationIconButton(
+                                icon: Icons.chevron_left,
+                                isEnabled: currentPage > 1,
+                                onPressed: () =>
+                                    fetchVenues(page: currentPage - 1),
+                                isSmall: isSmallScreen,
+                              ),
+                              SizedBox(width: isSmallScreen ? 6 : 12),
+                              // Page numbers
+                              ..._buildPageNumbers(isSmallScreen),
+                              SizedBox(width: isSmallScreen ? 6 : 12),
+                              // Next/Last buttons
+                              _buildPaginationIconButton(
+                                icon: Icons.chevron_right,
+                                isEnabled: currentPage < totalPages,
+                                onPressed: () =>
+                                    fetchVenues(page: currentPage + 1),
+                                isSmall: isSmallScreen,
+                              ),
+                              SizedBox(width: isSmallScreen ? 4 : 8),
+                              _buildPaginationIconButton(
+                                icon: Icons.keyboard_double_arrow_right,
+                                isEnabled: currentPage < totalPages,
+                                onPressed: () => fetchVenues(page: totalPages),
+                                isSmall: isSmallScreen,
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  DropdownButton<String>(
-                    value: sortBy,
-                    underline: Container(),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'price_low',
-                        child: Text('Harga Terendah'),
                       ),
-                      DropdownMenuItem(
-                        value: 'price_high',
-                        child: Text('Harga Tertinggi'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'rating',
-                        child: Text('Rating Tertinggi'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          sortBy = value;
-                          _sortVenues();
-                        });
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Venue Grid
-          if (isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (errorMessage.isNotEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(errorMessage),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => fetchVenues(page: currentPage),
-                      child: const Text('Coba Lagi'),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
-            )
-          else if (venues.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Tidak ada venue ditemukan',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text('Coba ubah filter pencarian Anda'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _resetFilters,
-                      child: const Text('Reset Filter'),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else
-            SliverLayoutBuilder(
-              builder: (context, constraints) {
-                double crossAxisExtent;
-                double spacing;
-                double aspectRatio;
-
-                // Responsive grid configuration - compact cards
-                if (constraints.crossAxisExtent < 600) {
-                  // Mobile: 2 columns - compact cards
-                  crossAxisExtent = (constraints.crossAxisExtent - 48) / 2;
-                  spacing = 12;
-                  // Higher aspect ratio = less height -> avoids big empty space
-                  // while keeping the card readable on small screens.
-                  aspectRatio = 0.78;
-                } else if (constraints.crossAxisExtent < 900) {
-                  // Tablet: 3 columns - compact cards
-                  crossAxisExtent = (constraints.crossAxisExtent - 64) / 3;
-                  spacing = 16;
-                  aspectRatio = 0.90;
-                } else {
-                  // Desktop: 4 columns - compact cards
-                  crossAxisExtent = (constraints.crossAxisExtent - 80) / 4;
-                  spacing = 16;
-                  aspectRatio = 0.95;
-                }
-
-                return SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: crossAxisExtent,
-                      childAspectRatio: aspectRatio,
-                      mainAxisSpacing: spacing,
-                      crossAxisSpacing: spacing,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _buildVenueCard(venues[index]),
-                      childCount: venues.length,
-                    ),
-                  ),
-                );
-              },
-            ),
-
-          // Enhanced Pagination - Responsive
-          if (!isLoading && venues.isNotEmpty)
-            SliverToBoxAdapter(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final screenWidth = constraints.maxWidth;
-                  final isSmallScreen = screenWidth < 600;
-
-                  return Container(
-                    margin: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                    child: Center(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // First/Previous buttons
-                            _buildPaginationIconButton(
-                              icon: Icons.keyboard_double_arrow_left,
-                              isEnabled: currentPage > 1,
-                              onPressed: () => fetchVenues(page: 1),
-                              isSmall: isSmallScreen,
-                            ),
-                            SizedBox(width: isSmallScreen ? 4 : 8),
-                            _buildPaginationIconButton(
-                              icon: Icons.chevron_left,
-                              isEnabled: currentPage > 1,
-                              onPressed: () =>
-                                  fetchVenues(page: currentPage - 1),
-                              isSmall: isSmallScreen,
-                            ),
-                            SizedBox(width: isSmallScreen ? 6 : 12),
-                            // Page numbers
-                            ..._buildPageNumbers(isSmallScreen),
-                            SizedBox(width: isSmallScreen ? 6 : 12),
-                            // Next/Last buttons
-                            _buildPaginationIconButton(
-                              icon: Icons.chevron_right,
-                              isEnabled: currentPage < totalPages,
-                              onPressed: () =>
-                                  fetchVenues(page: currentPage + 1),
-                              isSmall: isSmallScreen,
-                            ),
-                            SizedBox(width: isSmallScreen ? 4 : 8),
-                            _buildPaginationIconButton(
-                              icon: Icons.keyboard_double_arrow_right,
-                              isEnabled: currentPage < totalPages,
-                              onPressed: () => fetchVenues(page: totalPages),
-                              isSmall: isSmallScreen,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

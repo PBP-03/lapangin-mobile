@@ -130,233 +130,259 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       appBar: const BrandedAppBar(title: Text('Detail Booking')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Error: $_errorMessage'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadBookingDetail,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
-          : _booking == null
-          ? const Center(child: Text('Booking tidak ditemukan'))
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Status Header
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(
-                        _booking!['booking_status'],
-                      ).withOpacity(0.1),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: _getStatusColor(_booking!['booking_status']),
-                          width: 3,
-                        ),
-                      ),
-                    ),
+      body: RefreshIndicator(
+        onRefresh: _loadBookingDetail,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final Widget content = _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                ? Center(
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          _booking!['booking_status'] == 'confirmed'
-                              ? Icons.check_circle
-                              : _booking!['booking_status'] == 'completed'
-                              ? Icons.check_circle_outline
-                              : _booking!['booking_status'] == 'cancelled'
-                              ? Icons.cancel
-                              : Icons.pending,
+                        const Icon(
+                          Icons.error_outline,
                           size: 64,
-                          color: _getStatusColor(_booking!['booking_status']),
+                          color: Colors.red,
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _getStatusLabel(_booking!['booking_status']),
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: _getStatusColor(_booking!['booking_status']),
-                          ),
+                        const SizedBox(height: 16),
+                        Text('Error: $_errorMessage'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadBookingDetail,
+                          child: const Text('Retry'),
                         ),
                       ],
                     ),
-                  ),
-
-                  // Booking Information
-                  _buildSection('Informasi Booking', [
-                    _buildInfoRow(Icons.receipt, 'ID Booking', () {
-                      final id = _booking!['id']?.toString() ?? '';
-                      return id.length > 8 ? id.substring(0, 8) : id;
-                    }()),
-                    _buildInfoRow(
-                      Icons.business,
-                      'Venue',
-                      _displayValue(_booking!['venue_name']),
-                    ),
-                    _buildInfoRow(
-                      Icons.sports_soccer,
-                      'Lapangan',
-                      _displayValue(_booking!['court_name']),
-                    ),
-                    _buildInfoRow(
-                      Icons.calendar_today,
-                      'Tanggal',
-                      _displayValue(_booking!['booking_date']),
-                    ),
-                    _buildInfoRow(
-                      Icons.access_time,
-                      'Waktu',
-                      '${_displayValue(_booking!['start_time'])} - ${_displayValue(_booking!['end_time'])}',
-                    ),
-                    _buildInfoRow(
-                      Icons.timer,
-                      'Durasi',
-                      '${_displayValue(_booking!['duration_hours'])} jam',
-                    ),
-                    _buildInfoRow(
-                      Icons.attach_money,
-                      'Total Harga',
-                      _formatCurrency(_booking!['total_price']),
-                      isHighlight: true,
-                    ),
-                  ]),
-
-                  // Customer Information
-                  _buildSection('Informasi Pelanggan', [
-                    _buildInfoRow(
-                      Icons.person,
-                      'Nama',
-                      _displayValue(_booking!['customer_name']),
-                    ),
-                    _buildInfoRow(
-                      Icons.email,
-                      'Email',
-                      _displayValue(_booking!['customer_email']),
-                    ),
-                    _buildInfoRow(
-                      Icons.phone,
-                      'Telepon',
-                      _displayValue(_booking!['customer_phone']),
-                    ),
-                  ]),
-
-                  // Payment Information
-                  if (_booking!['payment'] != null)
-                    _buildSection('Informasi Pembayaran', [
-                      _buildInfoRow(
-                        Icons.payment,
-                        'Metode',
-                        _booking!['payment']['method'] ?? '-',
-                      ),
-                      _buildInfoRow(
-                        Icons.receipt_long,
-                        'Transaction ID',
-                        _booking!['payment']['transaction_id'] ?? '-',
-                      ),
-                      _buildInfoRow(
-                        Icons.event,
-                        'Dibayar pada',
-                        _booking!['payment']['paid_at'] ?? '-',
-                      ),
-                      if (_booking!['payment']['has_proof'] == true)
-                        _buildInfoRow(
-                          Icons.image,
-                          'Bukti Pembayaran',
-                          'Tersedia',
-                          trailing: TextButton(
-                            onPressed: () {
-                              // TODO: Show payment proof image
-                            },
-                            child: const Text('Lihat'),
+                  )
+                : _booking == null
+                ? const Center(child: Text('Booking tidak ditemukan'))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Status Header
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(
+                            _booking!['booking_status'],
+                          ).withOpacity(0.1),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: _getStatusColor(
+                                _booking!['booking_status'],
+                              ),
+                              width: 3,
+                            ),
                           ),
                         ),
-                    ]),
-
-                  // Notes
-                  if (_booking!['notes'] != null &&
-                      _booking!['notes'].toString().isNotEmpty)
-                    _buildSection('Catatan', [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          _booking!['notes'],
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ]),
-
-                  // Action Buttons
-                  if (_booking!['booking_status'] == 'pending')
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () =>
-                                  _updateBookingStatus('cancelled'),
-                              icon: const Icon(Icons.cancel),
-                              label: const Text('Tolak'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                                side: const BorderSide(color: Colors.red),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
+                        child: Column(
+                          children: [
+                            Icon(
+                              _booking!['booking_status'] == 'confirmed'
+                                  ? Icons.check_circle
+                                  : _booking!['booking_status'] == 'completed'
+                                  ? Icons.check_circle_outline
+                                  : _booking!['booking_status'] == 'cancelled'
+                                  ? Icons.cancel
+                                  : Icons.pending,
+                              size: 64,
+                              color: _getStatusColor(
+                                _booking!['booking_status'],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _getStatusLabel(_booking!['booking_status']),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: _getStatusColor(
+                                  _booking!['booking_status'],
                                 ),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+
+                      // Booking Information
+                      _buildSection('Informasi Booking', [
+                        _buildInfoRow(Icons.receipt, 'ID Booking', () {
+                          final id = _booking!['id']?.toString() ?? '';
+                          return id.length > 8 ? id.substring(0, 8) : id;
+                        }()),
+                        _buildInfoRow(
+                          Icons.business,
+                          'Venue',
+                          _displayValue(_booking!['venue_name']),
+                        ),
+                        _buildInfoRow(
+                          Icons.sports_soccer,
+                          'Lapangan',
+                          _displayValue(_booking!['court_name']),
+                        ),
+                        _buildInfoRow(
+                          Icons.calendar_today,
+                          'Tanggal',
+                          _displayValue(_booking!['booking_date']),
+                        ),
+                        _buildInfoRow(
+                          Icons.access_time,
+                          'Waktu',
+                          '${_displayValue(_booking!['start_time'])} - ${_displayValue(_booking!['end_time'])}',
+                        ),
+                        _buildInfoRow(
+                          Icons.timer,
+                          'Durasi',
+                          '${_displayValue(_booking!['duration_hours'])} jam',
+                        ),
+                        _buildInfoRow(
+                          Icons.attach_money,
+                          'Total Harga',
+                          _formatCurrency(_booking!['total_price']),
+                          isHighlight: true,
+                        ),
+                      ]),
+
+                      // Customer Information
+                      _buildSection('Informasi Pelanggan', [
+                        _buildInfoRow(
+                          Icons.person,
+                          'Nama',
+                          _displayValue(_booking!['customer_name']),
+                        ),
+                        _buildInfoRow(
+                          Icons.email,
+                          'Email',
+                          _displayValue(_booking!['customer_email']),
+                        ),
+                        _buildInfoRow(
+                          Icons.phone,
+                          'Telepon',
+                          _displayValue(_booking!['customer_phone']),
+                        ),
+                      ]),
+
+                      // Payment Information
+                      if (_booking!['payment'] != null)
+                        _buildSection('Informasi Pembayaran', [
+                          _buildInfoRow(
+                            Icons.payment,
+                            'Metode',
+                            _booking!['payment']['method'] ?? '-',
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
+                          _buildInfoRow(
+                            Icons.receipt_long,
+                            'Transaction ID',
+                            _booking!['payment']['transaction_id'] ?? '-',
+                          ),
+                          _buildInfoRow(
+                            Icons.event,
+                            'Dibayar pada',
+                            _booking!['payment']['paid_at'] ?? '-',
+                          ),
+                          if (_booking!['payment']['has_proof'] == true)
+                            _buildInfoRow(
+                              Icons.image,
+                              'Bukti Pembayaran',
+                              'Tersedia',
+                              trailing: TextButton(
+                                onPressed: () {
+                                  // TODO: Show payment proof image
+                                },
+                                child: const Text('Lihat'),
+                              ),
+                            ),
+                        ]),
+
+                      // Notes
+                      if (_booking!['notes'] != null &&
+                          _booking!['notes'].toString().isNotEmpty)
+                        _buildSection('Catatan', [
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              _booking!['notes'],
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ]),
+
+                      // Action Buttons
+                      if (_booking!['booking_status'] == 'pending')
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _updateBookingStatus('cancelled'),
+                                  icon: const Icon(Icons.cancel),
+                                  label: const Text('Tolak'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                    side: const BorderSide(color: Colors.red),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () =>
+                                      _updateBookingStatus('confirmed'),
+                                  icon: const Icon(Icons.check_circle),
+                                  label: const Text('Terima'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF5409DA),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      if (_booking!['booking_status'] == 'confirmed')
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: SizedBox(
+                            width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: () =>
-                                  _updateBookingStatus('confirmed'),
-                              icon: const Icon(Icons.check_circle),
-                              label: const Text('Terima'),
+                                  _updateBookingStatus('completed'),
+                              icon: const Icon(Icons.check),
+                              label: const Text('Tandai Selesai'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF5409DA),
+                                backgroundColor: Colors.green,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
                                 ),
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-
-                  if (_booking!['booking_status'] == 'confirmed')
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _updateBookingStatus('completed'),
-                          icon: const Icon(Icons.check),
-                          label: const Text('Tandai Selesai'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
                         ),
-                      ),
-                    ),
-                ],
+                    ],
+                  );
+
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: content,
               ),
-            ),
+            );
+          },
+        ),
+      ),
     );
   }
 

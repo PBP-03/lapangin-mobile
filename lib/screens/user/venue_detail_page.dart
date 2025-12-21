@@ -383,31 +383,60 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : errorMessage.isNotEmpty
-          ? _buildErrorWidget()
-          : venueDetail == null
-          ? _buildErrorWidget()
-          : CustomScrollView(
-              slivers: [
-                _buildAppBar(),
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeroSection(),
-                      _buildVenueCard(),
-                      if (venueDetail!.facilities.isNotEmpty)
-                        _buildFacilities(),
-                      _buildCourts(),
-                      _buildReviews(),
-                      const SizedBox(height: 20),
-                    ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await fetchVenueDetail();
+          await _loadCourtSessions();
+        },
+        child: isLoading
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                },
+              )
+            : (errorMessage.isNotEmpty || venueDetail == null)
+            ? LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: _buildErrorWidget(),
+                    ),
+                  );
+                },
+              )
+            : CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  _buildAppBar(),
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeroSection(),
+                        _buildVenueCard(),
+                        if (venueDetail!.facilities.isNotEmpty)
+                          _buildFacilities(),
+                        _buildCourts(),
+                        _buildReviews(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 

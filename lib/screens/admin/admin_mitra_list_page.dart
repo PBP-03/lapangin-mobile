@@ -176,7 +176,10 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
                 child: Row(
                   children: [
                     // Left side - Title and breadcrumb
@@ -188,7 +191,10 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
                           Row(
                             children: [
                               InkWell(
-                                onTap: () => Navigator.pushReplacementNamed(context, '/admin/home'),
+                                onTap: () => Navigator.pushReplacementNamed(
+                                  context,
+                                  '/admin/home',
+                                ),
                                 child: const Text(
                                   'Dashboard',
                                   style: TextStyle(
@@ -199,7 +205,10 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
                               ),
                               const Text(
                                 ' / ',
-                                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF6B7280),
+                                ),
                               ),
                               const Text(
                                 'Kelola Mitra',
@@ -267,214 +276,229 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5409DA)),
-        ),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.red),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadMitraList,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5409DA),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Coba Lagi'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_mitraList == null || _mitraList!.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.business_outlined,
-                size: 32,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Belum ada mitra',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Data mitra akan muncul di sini setelah ada pendaftaran',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: _loadMitraList,
       color: const Color(0xFF5409DA),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final Widget content;
+
+          if (_isLoading) {
+            content = const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5409DA)),
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Header "Daftar Mitra"
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
+            );
+          } else if (_errorMessage != null) {
+            content = Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14, color: Colors.red),
+                    ),
                   ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadMitraList,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF5409DA),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            );
+          } else if (_mitraList == null || _mitraList!.isEmpty) {
+            content = Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.business_outlined,
+                      size: 32,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Belum ada mitra',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      'Data mitra akan muncul di sini setelah ada pendaftaran',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            content = Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: const Row(
+                child: Column(
                   children: [
-                    Text(
-                      'Daftar Mitra',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                    // Header "Daftar Mitra"
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade200),
+                        ),
                       ),
+                      child: const Row(
+                        children: [
+                          Text(
+                            'Daftar Mitra',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Table Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        border: Border(
+                          bottom: BorderSide(color: Colors.grey.shade200),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 40,
+                            child: Text(
+                              'NO',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const Expanded(
+                            flex: 2,
+                            child: Text(
+                              'NAMA',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const Expanded(
+                            flex: 2,
+                            child: Text(
+                              'EMAIL',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 100,
+                            child: Text(
+                              'STATUS',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            flex: 3,
+                            child: Text(
+                              'AKSI',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Table Body
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _mitraList!.length,
+                      separatorBuilder: (context, index) =>
+                          Divider(height: 1, color: Colors.grey.shade200),
+                      itemBuilder: (context, index) {
+                        return _buildMitraRow(_mitraList![index], index + 1);
+                      },
                     ),
                   ],
                 ),
               ),
-              // Table Header
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Color(0xFFF8FAFC),
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade200),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(
-                      width: 40,
-                      child: Text(
-                        'NO',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    const Expanded(
-                      flex: 2,
-                      child: Text(
-                        'NAMA',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    const Expanded(
-                      flex: 2,
-                      child: Text(
-                        'EMAIL',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 100,
-                      child: Text(
-                        'STATUS',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        'AKSI',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Table Body
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _mitraList!.length,
-                separatorBuilder: (context, index) =>
-                    Divider(height: 1, color: Colors.grey.shade200),
-                itemBuilder: (context, index) {
-                  return _buildMitraRow(_mitraList![index], index + 1);
-                },
-              ),
-            ],
-          ),
-        ),
+            );
+          }
+
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: content,
+            ),
+          );
+        },
       ),
     );
   }
@@ -500,10 +524,7 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               width: 40,
               child: Text(
                 '$index',
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF111827),
-                ),
+                style: const TextStyle(fontSize: 15, color: Color(0xFF111827)),
               ),
             ),
             // Nama Column
@@ -523,10 +544,7 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               flex: 2,
               child: Text(
                 mitra.email,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
               ),
             ),
             // Status Column
