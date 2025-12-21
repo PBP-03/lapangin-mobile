@@ -3,7 +3,36 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../../config/config.dart';
 import '../../models/venue_detail.dart';
-import '../../providers/user_provider.dart';
+import 'booking_checkout_page.dart';
+
+class _AvailableCourtSession {
+  final int id;
+  final String sessionName;
+  final String startTime;
+  final String endTime;
+  final int durationMinutes;
+  final bool isAvailable;
+
+  const _AvailableCourtSession({
+    required this.id,
+    required this.sessionName,
+    required this.startTime,
+    required this.endTime,
+    required this.durationMinutes,
+    required this.isAvailable,
+  });
+
+  factory _AvailableCourtSession.fromJson(Map<String, dynamic> json) {
+    return _AvailableCourtSession(
+      id: (json['id'] as num).toInt(),
+      sessionName: (json['session_name'] ?? '').toString(),
+      startTime: (json['start_time'] ?? '').toString(),
+      endTime: (json['end_time'] ?? '').toString(),
+      durationMinutes: (json['duration'] as num?)?.toInt() ?? 0,
+      isAvailable: json['is_available'] == true,
+    );
+  }
+}
 
 class VenueDetailPage extends StatefulWidget {
   final String venueId;
@@ -21,43 +50,159 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   int selectedImageIndex = 0;
   Court? selectedCourt;
 
-  // Base URL - ganti dengan URL backend Anda
-  final String baseUrl = 'http://127.0.0.1:8000';
+  bool _hasFetchedVenueDetail = false;
+
+  DateTime? _selectedBookingDate;
+  bool _isSessionsLoading = false;
+  String _sessionsError = '';
+  List<_AvailableCourtSession> _availableSessions = const [];
+  final Set<int> _selectedSessionIds = <int>{};
+  double _pricePerHour = 0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkUserRole();
+      _fetchVenueDetailOnce();
     });
   }
 
-  void _checkUserRole() {
-    final userProvider = context.read<UserProvider>();
-    if (userProvider.user?.role != 'user') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hanya user yang dapat mengakses halaman ini'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      final role = userProvider.user?.role;
-      final targetRoute = switch (role) {
-        'admin' => '/admin/home',
-        'mitra' => '/mitra/home',
-        _ => '/login',
-      };
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
-      Future.microtask(() {
-        if (!mounted) return;
-        Navigator.of(
-          context,
-          rootNavigator: true,
-        ).pushNamedAndRemoveUntil(targetRoute, (route) => false);
+  String _formatDateYmd(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+
+  Future<void> _pickBookingDate() async {
+    final initial = _selectedBookingDate ?? DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial.isBefore(DateTime.now()) ? DateTime.now() : initial,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 90)),
+    );
+
+    if (!mounted) return;
+    if (picked == null) return;
+
+    setState(() {
+      _selectedBookingDate = picked;
+      _selectedSessionIds.clear();
+    });
+    await _loadCourtSessions();
+  }
+
+  Future<void> _loadCourtSessions() async {
+    if (selectedCourt == null) return;
+    if (_selectedBookingDate == null) return;
+
+    setState(() {
+      _isSessionsLoading = true;
+      _sessionsError = '';
+      _availableSessions = const [];
+      _pricePerHour = 0;
+    });
+
+    try {
+      final request = context.read<CookieRequest>();
+      final dateStr = _formatDateYmd(_selectedBookingDate!);
+      final url =
+          '${AppConfig.baseUrl}${AppConfig.courtsEndpoint}${selectedCourt!.id}/sessions/?date=$dateStr';
+      final response = await request.get(url);
+
+      if (!mounted) return;
+
+      if (response is Map && response['success'] == true) {
+        final data = response['data'];
+        final sessionsRaw = (data is Map) ? (data['sessions'] as List?) : null;
+        final sessions = (sessionsRaw ?? const [])
+            .whereType<Map>()
+            .map(
+              (s) =>
+                  _AvailableCourtSession.fromJson(Map<String, dynamic>.from(s)),
+            )
+            .toList();
+
+        final priceRaw = (data is Map) ? data['price_per_hour'] : null;
+        final price = (priceRaw is num) ? priceRaw.toDouble() : 0.0;
+
+        setState(() {
+          _availableSessions = sessions;
+          _pricePerHour = price;
+          _isSessionsLoading = false;
+        });
+        return;
+      }
+
+      setState(() {
+        _isSessionsLoading = false;
+        _sessionsError = (response is Map && response['message'] != null)
+            ? response['message'].toString()
+            : 'Failed to load sessions';
       });
-    } else {
-      fetchVenueDetail();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSessionsLoading = false;
+        _sessionsError = 'Failed to load sessions: ${e.toString()}';
+      });
     }
+  }
+
+  double _calculateSelectedTotalPrice() {
+    if (_pricePerHour <= 0) return 0;
+    double total = 0;
+    for (final session in _availableSessions) {
+      if (_selectedSessionIds.contains(session.id)) {
+        total += _pricePerHour * (session.durationMinutes / 60.0);
+      }
+    }
+    return total;
+  }
+
+  bool _canProceedToCheckout() {
+    return selectedCourt != null &&
+        _selectedBookingDate != null &&
+        _selectedSessionIds.isNotEmpty &&
+        !_isSessionsLoading;
+  }
+
+  Future<void> _goToCheckout() async {
+    if (!_canProceedToCheckout()) return;
+    if (venueDetail == null) return;
+
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => BookingCheckoutPage(
+          courtId: selectedCourt!.id,
+          courtName: selectedCourt!.name,
+          venueName: venueDetail!.name,
+          bookingDate: _selectedBookingDate!,
+          sessionIds: _selectedSessionIds.toList(),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == true) {
+      setState(() {
+        _selectedSessionIds.clear();
+      });
+      await _loadCourtSessions();
+    }
+  }
+
+  void _fetchVenueDetailOnce() {
+    if (_hasFetchedVenueDetail) return;
+    _hasFetchedVenueDetail = true;
+    fetchVenueDetail();
   }
 
   Future<void> fetchVenueDetail() async {
@@ -69,7 +214,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
     try {
       final request = context.read<CookieRequest>();
       final response = await request.get(
-        '$baseUrl/api/public/venues/${widget.venueId}/',
+        '${AppConfig.baseUrl}/api/public/venues/${widget.venueId}/',
       );
 
       if (mounted) {
@@ -780,8 +925,23 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                   return GestureDetector(
                     onTap: () {
                       setState(() {
-                        selectedCourt = isSelected ? null : court;
+                        if (isSelected) {
+                          selectedCourt = null;
+                          _selectedBookingDate = null;
+                          _availableSessions = const [];
+                          _selectedSessionIds.clear();
+                          _sessionsError = '';
+                          _pricePerHour = 0;
+                        } else {
+                          selectedCourt = court;
+                          _selectedBookingDate = DateTime.now();
+                          _selectedSessionIds.clear();
+                        }
                       });
+
+                      if (!isSelected) {
+                        _loadCourtSessions();
+                      }
                     },
                     child: Container(
                       padding: EdgeInsets.all(
@@ -889,7 +1049,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
             const Divider(height: 1),
             const SizedBox(height: 24),
             Text(
-              'Sessions for ${selectedCourt!.name}',
+              'Book ${selectedCourt!.name}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -897,67 +1057,129 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
               ),
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: selectedCourt!.sessions.map((session) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: session.isActive
-                        ? LinearGradient(
-                            colors: [
-                              Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.15),
-                              Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.08),
-                            ],
-                          )
-                        : null,
-                    color: session.isActive ? null : const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: session.isActive
-                          ? Theme.of(context).colorScheme.primary
-                          : const Color(0xFFE5E7EB),
-                      width: 1.5,
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 18),
+                        const SizedBox(width: 10),
+                        Text(
+                          _selectedBookingDate == null
+                              ? 'Pick a date'
+                              : _formatDateYmd(_selectedBookingDate!),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        session.sessionName,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: session.isActive
-                              ? const Color(0xFF111827)
-                              : const Color(0xFF9CA3AF),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${session.startTime} - ${session.endTime}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: session.isActive
-                              ? const Color(0xFF6B7280)
-                              : const Color(0xFF9CA3AF),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                ),
+                const SizedBox(width: 12),
+                FilledButton.tonal(
+                  onPressed: _pickBookingDate,
+                  child: const Text('Change'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_isSessionsLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (_sessionsError.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Text(
+                  _sessionsError,
+                  style: const TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontWeight: FontWeight.w600,
                   ),
-                );
-              }).toList(),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: _availableSessions.map((session) {
+                  final selected = _selectedSessionIds.contains(session.id);
+                  final disabled = !session.isAvailable;
+
+                  return FilterChip(
+                    label: Text(
+                      '${session.startTime} - ${session.endTime}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: disabled
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF111827),
+                      ),
+                    ),
+                    selected: selected,
+                    onSelected: disabled
+                        ? null
+                        : (value) {
+                            setState(() {
+                              if (value) {
+                                _selectedSessionIds.add(session.id);
+                              } else {
+                                _selectedSessionIds.remove(session.id);
+                              }
+                            });
+                          },
+                    selectedColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.18),
+                    checkmarkColor: Theme.of(context).colorScheme.primary,
+                    side: BorderSide(
+                      color: selected
+                          ? Theme.of(context).colorScheme.primary
+                          : const Color(0xFFE5E7EB),
+                    ),
+                    backgroundColor: disabled
+                        ? const Color(0xFFF3F4F6)
+                        : const Color(0xFFF9FAFB),
+                  );
+                }).toList(),
+              ),
+            const SizedBox(height: 16),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Total: Rp ${_calculateSelectedTotalPrice().toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: _canProceedToCheckout() ? _goToCheckout : null,
+                  icon: const Icon(Icons.shopping_cart_checkout_outlined),
+                  label: const Text('Checkout'),
+                ),
+              ],
             ),
           ],
         ],

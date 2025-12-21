@@ -841,7 +841,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
       return (s == null || s.isEmpty) ? null : s;
     }
 
-    final direct = normalize(booking['court_image']) ??
+    final direct =
+        normalize(booking['court_image']) ??
         normalize(booking['venue_image']) ??
         normalize(booking['image']);
     if (direct != null) return direct;
@@ -859,7 +860,8 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
         final first = normalize(vImages.first);
         if (first != null) return first;
       }
-      final vDirect = normalize(venue['image']) ?? normalize(venue['primary_image']);
+      final vDirect =
+          normalize(venue['image']) ?? normalize(venue['primary_image']);
       if (vDirect != null) return vDirect;
     }
 

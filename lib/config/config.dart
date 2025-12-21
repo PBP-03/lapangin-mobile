@@ -23,6 +23,7 @@ class AppConfig {
 
   // Bookings
   static const String bookingsEndpoint = '/bookings/history/';
+  static const String bookingCreateEndpoint = '/bookings/create/';
 
   // Reviews
   static const String reviewsEndpoint = '/api/venues/';
