@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../constants/api_constants.dart';
 import '../models/mitra_model.dart';
@@ -38,9 +40,7 @@ class AdminMitraService {
 
         return {
           'mitra': mitra,
-          'venues': venuesList
-              .map((json) => Venue.fromJson(json))
-              .toList(),
+          'venues': venuesList.map((json) => Venue.fromJson(json)).toList(),
         };
       } else {
         throw Exception(response['message'] ?? 'Failed to load venue details');
@@ -57,11 +57,15 @@ class AdminMitraService {
     String? rejectionReason,
   }) async {
     try {
-      final response = await request
-          .postJson('${ApiConstants.baseUrl}/api/mitra/$mitraId/', {
-            'status': status,
-            if (rejectionReason != null) 'rejection_reason': rejectionReason,
-          });
+      final payload = {
+        'status': status,
+        if (rejectionReason != null) 'rejection_reason': rejectionReason,
+      };
+
+      final response = await request.postJson(
+        '${ApiConstants.baseUrl}/api/mitra/$mitraId/',
+        jsonEncode(payload),
+      );
 
       if (response['status'] == 'ok') {
         return response;
@@ -81,11 +85,15 @@ class AdminMitraService {
     String? rejectionReason,
   }) async {
     try {
-      final response = await request
-          .postJson('${ApiConstants.baseUrl}/api/venues/$venueId/status/', {
-            'status': status,
-            if (rejectionReason != null) 'rejection_reason': rejectionReason,
-          });
+      final payload = {
+        'status': status,
+        if (rejectionReason != null) 'rejection_reason': rejectionReason,
+      };
+
+      final response = await request.postJson(
+        '${ApiConstants.baseUrl}/api/venues/$venueId/status/',
+        jsonEncode(payload),
+      );
 
       if (response['status'] == 'ok') {
         return response;

@@ -17,6 +17,8 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  static const double _tableMinWidth = 920;
+
   @override
   void initState() {
     super.initState();
@@ -180,71 +182,69 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
                   horizontal: 24,
                   vertical: 24,
                 ),
-                child: Row(
-                  children: [
-                    // Left side - Title and breadcrumb
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Breadcrumb
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: () => Navigator.pushReplacementNamed(
-                                  context,
-                                  '/admin/home',
-                                ),
-                                child: const Text(
-                                  'Dashboard',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFF6B7280),
-                                  ),
-                                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final bool isNarrow = constraints.maxWidth < 560;
+
+                    final titleSection = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Breadcrumb
+                        Row(
+                          children: [
+                            InkWell(
+                              onTap: () => Navigator.pushReplacementNamed(
+                                context,
+                                '/admin/home',
                               ),
-                              const Text(
-                                ' / ',
+                              child: const Text(
+                                'Dashboard',
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Color(0xFF6B7280),
                                 ),
                               ),
-                              const Text(
-                                'Kelola Mitra',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF111827),
-                                  fontWeight: FontWeight.w500,
-                                ),
+                            ),
+                            const Text(
+                              ' / ',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7280),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          // Title
-                          const Text(
-                            'Kelola Mitra',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF111827),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          // Subtitle
-                          const Text(
-                            'Kelola dan verifikasi mitra pemilik lapangan',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6B7280),
+                            const Text(
+                              'Kelola Mitra',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Title
+                        const Text(
+                          'Kelola Mitra',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF111827),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Right side - Earnings button
-                    ElevatedButton.icon(
+                        ),
+                        const SizedBox(height: 4),
+                        // Subtitle
+                        const Text(
+                          'Kelola dan verifikasi mitra pemilik lapangan',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    );
+
+                    final earningsButton = ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pushNamed(context, '/admin/pendapatan-mitra');
                       },
@@ -262,8 +262,27 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
                         ),
                         elevation: 1,
                       ),
-                    ),
-                  ],
+                    );
+
+                    if (!isNarrow) {
+                      return Row(
+                        children: [
+                          Expanded(child: titleSection),
+                          const SizedBox(width: 16),
+                          earningsButton,
+                        ],
+                      );
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        titleSection,
+                        const SizedBox(height: 16),
+                        SizedBox(width: double.infinity, child: earningsButton),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -356,6 +375,10 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               ),
             );
           } else {
+            final double tableWidth = constraints.maxWidth < _tableMinWidth
+                ? _tableMinWidth
+                : constraints.maxWidth;
+
             content = Padding(
               padding: const EdgeInsets.all(16),
               child: Container(
@@ -395,95 +418,113 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
                       ),
                     ),
 
-                    // Table Header
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
-                        border: Border(
-                          bottom: BorderSide(color: Colors.grey.shade200),
+                    // Table (HTML-like overflow-x-auto)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: tableWidth,
+                        child: Column(
+                          children: [
+                            // Table Header
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade200,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const SizedBox(
+                                    width: 40,
+                                    child: Text(
+                                      'NO',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF64748B),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      'NAMA',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF64748B),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      'EMAIL',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF64748B),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: 100,
+                                    child: Text(
+                                      'STATUS',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF64748B),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      'AKSI',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF64748B),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // Table Body
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _mitraList!.length,
+                              separatorBuilder: (context, index) => Divider(
+                                height: 1,
+                                color: Colors.grey.shade200,
+                              ),
+                              itemBuilder: (context, index) {
+                                return _buildMitraRow(
+                                  _mitraList![index],
+                                  index + 1,
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 40,
-                            child: Text(
-                              'NO',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const Expanded(
-                            flex: 2,
-                            child: Text(
-                              'NAMA',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const Expanded(
-                            flex: 2,
-                            child: Text(
-                              'EMAIL',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 100,
-                            child: Text(
-                              'STATUS',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            flex: 3,
-                            child: Text(
-                              'AKSI',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Table Body
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _mitraList!.length,
-                      separatorBuilder: (context, index) =>
-                          Divider(height: 1, color: Colors.grey.shade200),
-                      itemBuilder: (context, index) {
-                        return _buildMitraRow(_mitraList![index], index + 1);
-                      },
                     ),
                   ],
                 ),
@@ -532,6 +573,8 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               flex: 2,
               child: Text(
                 mitra.nama,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
@@ -544,6 +587,8 @@ class _AdminMitraListPageState extends State<AdminMitraListPage> {
               flex: 2,
               child: Text(
                 mitra.email,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
               ),
             ),

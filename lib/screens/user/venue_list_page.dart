@@ -37,9 +37,6 @@ class _VenueListPageState extends State<VenueListPage> {
   // Sorting
   String sortBy = 'price_low';
 
-  // Base URL - ganti dengan URL backend Anda
-  final String baseUrl = 'http://127.0.0.1:8000';
-
   @override
   void initState() {
     super.initState();
@@ -101,7 +98,7 @@ class _VenueListPageState extends State<VenueListPage> {
       }
 
       // Build URL with query parameters
-      String url = 'http://localhost:8000/api/public/venues/';
+      String url = AppConfig.buildUrl(AppConfig.venuesEndpoint);
       if (queryParams.isNotEmpty) {
         url +=
             '?' +

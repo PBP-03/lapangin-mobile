@@ -105,6 +105,42 @@ class Venue {
   });
 
   factory Venue.fromJson(Map<String, dynamic> json) {
+    List<String> parseImageUrls(dynamic raw) {
+      if (raw is! List) return [];
+
+      final List<Map<String, dynamic>> mapped = [];
+      final List<String> plain = [];
+
+      for (final item in raw) {
+        if (item is String) {
+          if (item.trim().isNotEmpty) plain.add(item);
+          continue;
+        }
+        if (item is Map) {
+          final map = Map<String, dynamic>.from(item);
+          mapped.add(map);
+          continue;
+        }
+      }
+
+      if (mapped.isEmpty) return plain;
+
+      mapped.sort((a, b) {
+        final bool aPrimary = (a['is_primary'] as bool?) ?? false;
+        final bool bPrimary = (b['is_primary'] as bool?) ?? false;
+        if (aPrimary == bPrimary) return 0;
+        return aPrimary ? -1 : 1;
+      });
+
+      final urls = <String>[];
+      for (final m in mapped) {
+        final dynamic url = m['url'] ?? m['image_url'] ?? m['image'];
+        final s = url?.toString() ?? '';
+        if (s.trim().isNotEmpty) urls.add(s);
+      }
+      return urls;
+    }
+
     // Handle category field - can be string or list
     List<String> categoriesList = [];
     if (json['category'] != null) {
@@ -140,7 +176,7 @@ class Venue {
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'] as String) ?? DateTime.now()
           : DateTime.now(),
-      images: (json['images'] as List<dynamic>?)?.cast<String>() ?? [],
+      images: parseImageUrls(json['images']),
       averageRating:
           (json['avg_rating'] as num?)?.toDouble() ??
           (json['average_rating'] as num?)?.toDouble(),
@@ -155,12 +191,14 @@ class Venue {
       closingTime: json['closing_time'] as String?,
       facilities:
           (json['facilities'] as List<dynamic>?)
-              ?.map((f) => Facility.fromJson(f))
+              ?.whereType<Map>()
+              .map((f) => Facility.fromJson(Map<String, dynamic>.from(f)))
               .toList() ??
           [],
       sportsCategories:
           (json['sports_categories'] as List<dynamic>?)
-              ?.map((c) => SportsCategory.fromJson(c))
+              ?.whereType<Map>()
+              .map((c) => SportsCategory.fromJson(Map<String, dynamic>.from(c)))
               .toList() ??
           [],
       courts: (json['courts'] as List<dynamic>?)?.toList() ?? [],

@@ -585,7 +585,25 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
                   ),
                   if (isExpanded) ...[
                     const SizedBox(height: 12),
-                    ...venue.courts.map((court) {
+                    ...venue.courts.map((courtRaw) {
+                      final Map<String, dynamic> court = courtRaw is Map
+                          ? Map<String, dynamic>.from(courtRaw)
+                          : <String, dynamic>{};
+                      final String courtName = (court['name'] ?? '')
+                          .toString()
+                          .trim();
+                      final String courtCategory = (court['category'] ?? '')
+                          .toString()
+                          .trim();
+                      final bool courtIsActive =
+                          (court['is_active'] as bool?) ?? true;
+                      final String courtDescription =
+                          (court['description'] ?? '').toString();
+                      final dynamic rawPrice = court['price_per_hour'];
+                      final double courtPrice = rawPrice is num
+                          ? rawPrice.toDouble()
+                          : double.tryParse(rawPrice?.toString() ?? '') ?? 0;
+
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(12),
@@ -602,7 +620,7 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    court.name,
+                                    courtName.isEmpty ? '-' : courtName,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
@@ -610,7 +628,7 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
                                   ),
                                 ),
                                 Text(
-                                  'Rp ${court.pricePerHour.toStringAsFixed(0)}',
+                                  'Rp ${courtPrice.toStringAsFixed(0)}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
@@ -632,7 +650,7 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    court.category,
+                                    courtCategory.isEmpty ? '-' : courtCategory,
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: Colors.blue.shade700,
@@ -647,16 +665,16 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: court.isActive
+                                    color: courtIsActive
                                         ? Colors.green.shade50
                                         : Colors.red.shade50,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
-                                    court.isActive ? 'Aktif' : 'Nonaktif',
+                                    courtIsActive ? 'Aktif' : 'Nonaktif',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: court.isActive
+                                      color: courtIsActive
                                           ? Colors.green.shade700
                                           : Colors.red.shade700,
                                       fontWeight: FontWeight.w600,
@@ -665,10 +683,10 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
                                 ),
                               ],
                             ),
-                            if (court.description.isNotEmpty) ...[
+                            if (courtDescription.trim().isNotEmpty) ...[
                               const SizedBox(height: 8),
                               Text(
-                                court.description,
+                                courtDescription,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade600,
