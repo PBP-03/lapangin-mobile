@@ -6,7 +6,9 @@ import '../../models/venue.dart';
 import 'venue_detail_page.dart';
 
 class VenueListPage extends StatefulWidget {
-  const VenueListPage({super.key});
+  final String? initialSearch;
+
+  const VenueListPage({super.key, this.initialSearch});
 
   @override
   State<VenueListPage> createState() => _VenueListPageState();
@@ -41,6 +43,12 @@ class _VenueListPageState extends State<VenueListPage> {
   @override
   void initState() {
     super.initState();
+
+    final initial = widget.initialSearch;
+    if (initial != null && initial.trim().isNotEmpty) {
+      _searchController.text = initial.trim();
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchVenuesOnce();
     });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +8,7 @@ import '../../constants/app_theme.dart';
 import '../../models/venue.dart';
 import '../../providers/user_provider.dart';
 import 'booking_history_page.dart';
+import 'venue_search_page.dart';
 import 'venue_detail_page.dart';
 import 'venue_list_page.dart';
 
@@ -24,6 +26,14 @@ class _UserHomePageState extends State<UserHomePage> {
 
   bool _hasFetched = false;
 
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  Timer? _searchDebounce;
+
+  bool _isSearching = false;
+  String _searchError = '';
+  List<Venue> _searchResults = const [];
+
   static const List<_SportItem> _sports = [
     _SportItem(title: 'Futsal', icon: Icons.sports_soccer),
     _SportItem(title: 'Badminton', icon: Icons.sports_tennis),
@@ -40,9 +50,95 @@ class _UserHomePageState extends State<UserHomePage> {
   @override
   void initState() {
     super.initState();
+
+    _searchController.addListener(_onSearchChanged);
+    _searchFocusNode.addListener(() {
+      if (!mounted) return;
+      setState(() {
+        if (!_searchFocusNode.hasFocus) {
+          _isSearching = false;
+          _searchError = '';
+        }
+      });
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchFeaturedOnce();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim();
+
+    _searchDebounce?.cancel();
+
+    if (query.length < 2) {
+      if (!mounted) return;
+      setState(() {
+        _isSearching = false;
+        _searchError = '';
+        _searchResults = const [];
+      });
+      return;
+    }
+
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      _performSearch(query);
+    });
+  }
+
+  Future<void> _performSearch(String query) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isSearching = true;
+      _searchError = '';
+    });
+
+    try {
+      final request = context.read<CookieRequest>();
+
+      final uri = Uri.parse(AppConfig.buildUrl(AppConfig.venuesEndpoint))
+          .replace(
+            queryParameters: <String, String>{
+              'search': query,
+              'page': '1',
+              'page_size': '5',
+            },
+          );
+
+      final response = await request.get(uri.toString());
+      if (!mounted) return;
+
+      if (response != null && response['status'] == 'ok') {
+        final venueResponse = VenueListResponse.fromJson(response);
+        setState(() {
+          _searchResults = venueResponse.data.take(5).toList(growable: false);
+          _isSearching = false;
+        });
+      } else {
+        setState(() {
+          _searchError = 'Gagal memuat hasil pencarian.';
+          _searchResults = const [];
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _searchError = 'Search error: $e';
+        _searchResults = const [];
+        _isSearching = false;
+      });
+    }
   }
 
   void _fetchFeaturedOnce() {
@@ -96,6 +192,21 @@ class _UserHomePageState extends State<UserHomePage> {
     ).push(MaterialPageRoute(builder: (_) => const VenueListPage()));
   }
 
+  void _openSearch() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => VenueSearchPage(initialQuery: _searchController.text),
+      ),
+    );
+  }
+
+  void _goToVenuesWithSearch(String query) {
+    final q = query.trim();
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => VenueListPage(initialSearch: q)));
+  }
+
   void _goToBookings() {
     Navigator.of(
       context,
@@ -108,6 +219,12 @@ class _UserHomePageState extends State<UserHomePage> {
     );
   }
 
+  void _openSearchedVenue(Venue venue) {
+    _searchController.clear();
+    _searchFocusNode.unfocus();
+    _openVenue(venue);
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
@@ -115,6 +232,9 @@ class _UserHomePageState extends State<UserHomePage> {
     final greetingName = (username == null || username.isEmpty)
         ? 'User'
         : username;
+
+    final searchQuery = _searchController.text.trim();
+    final showSearchDropdown = false;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -127,19 +247,38 @@ class _UserHomePageState extends State<UserHomePage> {
               elevation: 0,
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
-              expandedHeight: 260,
+              expandedHeight: 340,
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.parallax,
                 background: _HeroHeader(
                   greetingName: greetingName,
-                  onSearchTap: _goToVenues,
+                  searchController: _searchController,
+                  searchFocusNode: _searchFocusNode,
+                  showSearchDropdown: showSearchDropdown,
+                  isSearching: _isSearching,
+                  searchError: _searchError,
+                  searchResults: _searchResults,
+                  onSubmitSearch: (q) {
+                    final trimmed = q.trim();
+                    if (trimmed.isEmpty) return;
+                    _searchFocusNode.unfocus();
+                    _goToVenuesWithSearch(trimmed);
+                  },
+                  onTapSearchAll: () {
+                    final trimmed = _searchController.text.trim();
+                    if (trimmed.isEmpty) return;
+                    _searchFocusNode.unfocus();
+                    _goToVenuesWithSearch(trimmed);
+                  },
+                  onOpenResult: _openSearchedVenue,
+                  onOpenSearchScreen: _openSearch,
                 ),
               ),
               title: const Text('LapangIN'),
               actions: [
                 IconButton(
                   tooltip: 'Cari venue',
-                  onPressed: _goToVenues,
+                  onPressed: _openSearch,
                   icon: const Icon(Icons.search),
                 ),
               ],
@@ -152,38 +291,7 @@ class _UserHomePageState extends State<UserHomePage> {
                   AppSpacing.md,
                   0,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _SectionHeader(
-                      title: 'Quick Actions',
-                      subtitle:
-                          'Mulai dari sini — cari venue, lihat booking, dan eksplor olahraga.',
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _QuickActionCard(
-                            title: 'Cari Court',
-                            subtitle: 'Temukan venue terbaik',
-                            icon: Icons.travel_explore,
-                            onTap: _goToVenues,
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: _QuickActionCard(
-                            title: 'Booking Saya',
-                            subtitle: 'Cek riwayat & status',
-                            icon: Icons.receipt_long,
-                            onTap: _goToBookings,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                
               ),
             ),
             SliverToBoxAdapter(
@@ -248,7 +356,7 @@ class _UserHomePageState extends State<UserHomePage> {
             ),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 270,
+                height: 320,
                 child: _FeaturedVenuesStrip(
                   isLoading: _isLoadingFeatured,
                   error: _featuredError,
@@ -278,12 +386,36 @@ class _UserHomePageState extends State<UserHomePage> {
 
 class _HeroHeader extends StatelessWidget {
   final String greetingName;
-  final VoidCallback onSearchTap;
+  final TextEditingController searchController;
+  final FocusNode searchFocusNode;
+  final bool showSearchDropdown;
+  final bool isSearching;
+  final String searchError;
+  final List<Venue> searchResults;
+  final ValueChanged<String> onSubmitSearch;
+  final VoidCallback onTapSearchAll;
+  final void Function(Venue venue) onOpenResult;
+  final VoidCallback onOpenSearchScreen;
 
-  const _HeroHeader({required this.greetingName, required this.onSearchTap});
+  const _HeroHeader({
+    required this.greetingName,
+    required this.searchController,
+    required this.searchFocusNode,
+    required this.showSearchDropdown,
+    required this.isSearching,
+    required this.searchError,
+    required this.searchResults,
+    required this.onSubmitSearch,
+    required this.onTapSearchAll,
+    required this.onOpenResult,
+    required this.onOpenSearchScreen,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final query = searchController.text.trim();
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -354,18 +486,17 @@ class _HeroHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                InkWell(
-                  onTap: onSearchTap,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                GestureDetector(
+                  onTap: onOpenSearchScreen,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.md,
-                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.16),
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(color: Colors.white.withOpacity(0.22)),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.md,
                     ),
                     child: Row(
                       children: [
@@ -374,9 +505,11 @@ class _HeroHeader extends StatelessWidget {
                         Expanded(
                           child: Text(
                             'Cari venue, lokasi, atau olahraga…',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.95),
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -391,6 +524,138 @@ class _HeroHeader extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroSearchDropdown extends StatelessWidget {
+  final String query;
+  final bool isSearching;
+  final String error;
+  final List<Venue> results;
+  final VoidCallback onTapSearchAll;
+  final void Function(Venue venue) onOpenResult;
+
+  const _HeroSearchDropdown({
+    required this.query,
+    required this.isSearching,
+    required this.error,
+    required this.results,
+    required this.onTapSearchAll,
+    required this.onOpenResult,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (isSearching) {
+      return const Padding(
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: AppSpacing.md),
+            Expanded(child: Text('Mencari…')),
+          ],
+        ),
+      );
+    }
+
+    if (error.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, color: theme.colorScheme.error),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: Text(error, style: AppTextStyles.bodyMedium)),
+          ],
+        ),
+      );
+    }
+
+    if (results.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            Icon(Icons.search_off_outlined),
+            SizedBox(width: AppSpacing.md),
+            Expanded(child: Text('Tidak ada hasil.')),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: ListView.separated(
+            padding: EdgeInsets.zero,
+            itemCount: results.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final venue = results[index];
+              final imageUrl = venue.images.isNotEmpty
+                  ? venue.images.first
+                  : '';
+              return ListTile(
+                dense: true,
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: imageUrl.isEmpty
+                        ? Container(
+                            color: AppColors.primary.withOpacity(0.10),
+                            child: const Icon(Icons.stadium_outlined),
+                          )
+                        : Image.network(
+                            AppConfig.buildProxyImageUrl(imageUrl),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) {
+                              return Container(
+                                color: Colors.black.withOpacity(0.05),
+                                child: const Icon(Icons.stadium_outlined),
+                              );
+                            },
+                          ),
+                  ),
+                ),
+                title: Text(
+                  venue.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                subtitle: Text(
+                  venue.address,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption,
+                ),
+                onTap: () => onOpenResult(venue),
+              );
+            },
+          ),
+        ),
+        const Divider(height: 1),
+        ListTile(
+          dense: true,
+          leading: const Icon(Icons.travel_explore),
+          title: Text('Lihat semua hasil untuk "$query"'),
+          onTap: onTapSearchAll,
         ),
       ],
     );
@@ -459,6 +724,7 @@ class _QuickActionCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       title,
@@ -469,11 +735,13 @@ class _QuickActionCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: AppTextStyles.bodySmall,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Flexible(
+                      child: Text(
+                        subtitle,
+                        style: AppTextStyles.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -506,7 +774,7 @@ class _SportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      width: 120,
+      width: 100,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -534,8 +802,8 @@ class _SportCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
-          Text('Lihat venue', style: AppTextStyles.caption),
+          // const SizedBox(height: 2),
+          // Text('Lihat venue', style: AppTextStyles.caption),
         ],
       ),
     );
@@ -732,16 +1000,17 @@ class _FeaturedVenueCard extends StatelessWidget {
                     padding: const EdgeInsets.all(AppSpacing.md),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.max,
                       children: [
                         Text(
                           venue.name,
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodyLarge.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Row(
                           children: [
                             const Icon(
@@ -787,14 +1056,14 @@ class _FeaturedVenueCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
                           'Rp ${_formatRupiah(venue.pricePerHour)}/jam',
                           style: AppTextStyles.bodyMedium.copyWith(
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(
@@ -864,15 +1133,20 @@ class _InfoBanner extends StatelessWidget {
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'Siap main hari ini?',
                   style: TextStyle(fontWeight: FontWeight.w900),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 4),
                 Text(
                   'Cari venue terdekat, pilih lapangan, lalu booking dalam beberapa langkah.',
                   style: AppTextStyles.bodySmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
