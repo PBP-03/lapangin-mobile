@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,19 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.unknown,
+  };
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -40,6 +54,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'LapangIN',
         debugShowCheckedModeBanner: false,
+        scrollBehavior: const AppScrollBehavior(),
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF5409DA),
