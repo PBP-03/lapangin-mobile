@@ -1,5 +1,10 @@
 # LapangIN
 
+[![Build Status](https://app.bitrise.io/app/04ae1d3a-e3ad-4c69-8113-d17be13af7bd/status.svg?token=2kDCrWgxb1WJPjoH7UdVLw&branch=main)](https://app.bitrise.io/app/04ae1d3a-e3ad-4c69-8113-d17be13af7bd)
+
+## Download
+Download aplikasi versi terbaru: [Download APK](https://app.bitrise.io/app/04ae1d3a-e3ad-4c69-8113-d17be13af7bd/installable-artifacts/1a4861e95a0c18eb/public-install-page/4b32324d3b059bec64aef2f0609e5685)
+
 ## 👥 Nama-nama Anggota Kelompok
 
 - **Flora Cahaya Putri** – 2406350955
