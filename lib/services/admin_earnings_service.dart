@@ -1,5 +1,6 @@
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/earnings_model.dart';
 import '../constants/api_constants.dart';
@@ -52,8 +53,10 @@ class AdminEarningsService {
   /// Endpoint: GET /api/refunds/
   Future<List<RefundModel>> getRefunds() async {
     try {
-      final response = await request.get('${ApiConstants.baseUrl}/api/refunds/');
-      
+      final response = await request.get(
+        '${ApiConstants.baseUrl}/api/refunds/',
+      );
+
       if (response['status'] == 'ok') {
         final List<dynamic> data = response['data'] ?? [];
         return data.map((json) => RefundModel.fromJson(json)).toList();
@@ -70,24 +73,21 @@ class AdminEarningsService {
   Future<void> createRefund(String pendapatanId, String reason) async {
     try {
       // Ensure URL has trailing slash - Django is picky about this
-      final url = '${ApiConstants.baseUrl}/api/refunds/create/';
+      final url = '${ApiConstants.baseUrl}/api/refunds/';
       debugPrint('=== CREATE REFUND START ===');
       debugPrint('URL: $url');
       debugPrint('Pendapatan ID: $pendapatanId');
       debugPrint('Reason: $reason');
-      
+
       // Try with postJson which sets proper Content-Type headers
       final response = await request.postJson(
         url,
-        jsonEncode({
-          'pendapatan_id': pendapatanId,
-          'reason': reason,
-        }),
+        jsonEncode({'pendapatan_id': pendapatanId, 'reason': reason}),
       );
-      
+
       debugPrint('Response type: ${response.runtimeType}');
       debugPrint('Response: $response');
-      
+
       // Handle different response types
       if (response is Map) {
         if (response['status'] == 'error') {
@@ -98,15 +98,21 @@ class AdminEarningsService {
         }
         debugPrint('Refund processed successfully!');
       } else if (response is String) {
-        debugPrint('Response is String (likely HTML error): ${response.substring(0, 200)}');
+        debugPrint(
+          'Response is String (likely HTML error): ${response.substring(0, 200)}',
+        );
         // If response is HTML string
-        throw Exception('Server returned HTML error. This may be a CSRF or authentication issue.');
+        throw Exception(
+          'Server returned HTML error. This may be a CSRF or authentication issue.',
+        );
       } else {
         throw Exception('Invalid response format: ${response.runtimeType}');
       }
     } on FormatException catch (e) {
       debugPrint('FormatException: $e');
-      throw Exception('Server returned HTML instead of JSON. Check backend CSRF settings or try logging in again.');
+      throw Exception(
+        'Server returned HTML instead of JSON. Check backend CSRF settings or try logging in again.',
+      );
     } catch (e) {
       debugPrint('Error in createRefund: $e');
       if (e.toString().contains('Exception:')) {
@@ -120,13 +126,41 @@ class AdminEarningsService {
   /// Endpoint: DELETE /api/refunds/<pendapatan_id>/cancel/
   Future<void> cancelRefund(String pendapatanId) async {
     try {
-      final response = await request.post(
-        '${ApiConstants.baseUrl}/api/refunds/$pendapatanId/cancel/',
-        {},
-      );
-      
-      if (response['status'] != 'ok') {
-        throw Exception(response['message'] ?? 'Failed to cancel refund');
+      await request.init();
+      final url = '${ApiConstants.baseUrl}/api/refunds/$pendapatanId/cancel/';
+
+      final client = http.Client();
+      if (kIsWeb) {
+        dynamic c = client;
+        c.withCredentials = true;
+      }
+
+      final http.Response resp;
+      try {
+        resp = await client.delete(Uri.parse(url), headers: request.headers);
+      } finally {
+        client.close();
+      }
+
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        try {
+          final decoded = resp.body.isNotEmpty ? json.decode(resp.body) : null;
+          if (decoded is Map && decoded['message'] != null) {
+            throw Exception(decoded['message']);
+          }
+        } catch (_) {
+          // Ignore JSON parsing errors and fall back to generic message.
+        }
+        throw Exception('Failed to cancel refund (HTTP ${resp.statusCode})');
+      }
+
+      if (resp.body.isEmpty) return;
+
+      final decoded = json.decode(resp.body);
+      if (decoded is Map &&
+          decoded['status'] != null &&
+          decoded['status'] != 'ok') {
+        throw Exception(decoded['message'] ?? 'Failed to cancel refund');
       }
     } catch (e) {
       throw Exception('Error cancelling refund: $e');
