@@ -249,16 +249,19 @@ class _UserHomePageState extends State<UserHomePage> {
               backgroundColor: Colors.white,
               surfaceTintColor: Colors.white,
               foregroundColor: AppColors.primary,
+              titleTextStyle: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(color: AppColors.primary),
               expandedHeight: 340,
               leading: const Padding(
                 padding: EdgeInsets.only(left: 12),
                 child: AppLogo(
-                  size: 26,
+                  size: 44,
                   assetPath: 'assets/images/logo/logo.png',
                   fit: BoxFit.contain,
                 ),
               ),
-              leadingWidth: 64,
+              leadingWidth: 84,
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.parallax,
                 background: _HeroHeader(
@@ -285,7 +288,7 @@ class _UserHomePageState extends State<UserHomePage> {
                   onOpenSearchScreen: _openSearch,
                 ),
               ),
-              title: const Text('LapangIN'),
+              // title: const Text('LapangIN'),
               actions: [
                 IconButton(
                   tooltip: 'Cari venue',
@@ -1134,10 +1137,10 @@ class _InfoBanner extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.12),
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
-            child: const Icon(Icons.bolt, color: AppColors.primary),
+            child: const Icon(Icons.bolt, color: AppColors.background),
           ),
           const SizedBox(width: AppSpacing.md),
           const Expanded(

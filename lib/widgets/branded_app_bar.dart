@@ -38,9 +38,12 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedForeground = foregroundColor ?? AppColors.primary;
+    final resolvedTitleTextStyle = Theme.of(
+      context,
+    ).textTheme.titleMedium?.copyWith(color: resolvedForeground);
 
     const appBarLogo = AppLogo(
-      size: 26,
+      size: 44,
       assetPath: 'assets/images/logo/logo.png',
       fit: BoxFit.contain,
     );
@@ -53,7 +56,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
           automaticallyImplyLeading && Navigator.of(context).canPop();
 
       if (canPop) {
-        resolvedLeadingWidth = 120;
+        resolvedLeadingWidth = 160;
         resolvedLeading = Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -63,7 +66,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         );
       } else {
-        resolvedLeadingWidth = 64;
+        resolvedLeadingWidth = 84;
         resolvedLeading = Padding(
           padding: const EdgeInsets.only(left: 12),
           child: appBarLogo,
@@ -75,6 +78,7 @@ class BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: backgroundColor,
       surfaceTintColor: backgroundColor,
       foregroundColor: resolvedForeground,
+      titleTextStyle: resolvedTitleTextStyle,
       automaticallyImplyLeading: automaticallyImplyLeading,
       leading: resolvedLeading,
       leadingWidth: resolvedLeadingWidth,
