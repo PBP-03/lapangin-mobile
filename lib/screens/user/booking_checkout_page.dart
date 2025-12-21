@@ -276,7 +276,7 @@ class _BookingCheckoutPageState extends State<BookingCheckoutPage> {
       if (response is Map && response['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Booking created successfully.'),
+            content: Text('Booking successful!'),
             backgroundColor: Colors.green,
           ),
         );
