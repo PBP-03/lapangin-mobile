@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class PendapatanPage extends StatefulWidget {
   const PendapatanPage({super.key});
@@ -30,6 +31,7 @@ class _PendapatanPageState extends State<PendapatanPage> {
   }
 
   Future<void> _loadPendapatan() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
@@ -39,6 +41,7 @@ class _PendapatanPageState extends State<PendapatanPage> {
       final response = await request.get(url);
 
       if (response['success'] == true) {
+        if (!mounted) return;
         setState(() {
           final stats = response['data']['statistics'];
           _stats = {
@@ -84,12 +87,11 @@ class _PendapatanPageState extends State<PendapatanPage> {
 
           _isLoading = false;
         });
-        print('✅ Loaded revenue data from API');
       } else {
         throw Exception(response['message'] ?? 'Failed to load revenue data');
       }
     } catch (e) {
-      print('❌ Error loading pendapatan: $e');
+      if (!mounted) return;
       setState(() {
         _stats = {
           'total_pendapatan': 0,
@@ -100,11 +102,9 @@ class _PendapatanPageState extends State<PendapatanPage> {
         _transactions = [];
         _isLoading = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading revenue: $e')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading revenue: $e')));
     }
   }
 
@@ -116,19 +116,17 @@ class _PendapatanPageState extends State<PendapatanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BrandedAppBar(
         title: const Text('Pendapatan & Keuangan'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: DropdownButton<String>(
               value: _selectedPeriod,
-              dropdownColor: const Color(0xFF5409DA),
-              style: const TextStyle(color: Colors.white),
+              dropdownColor: Colors.white,
+              style: const TextStyle(color: Color(0xFF5409DA)),
               underline: Container(),
-              icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+              icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF5409DA)),
               items: const [
                 DropdownMenuItem(value: 'all', child: Text('Semua Waktu')),
                 DropdownMenuItem(
@@ -150,13 +148,26 @@ class _PendapatanPageState extends State<PendapatanPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [_buildStatsCards(), _buildTransactionsList()],
+      body: RefreshIndicator(
+        onRefresh: _loadPendapatan,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final Widget content = _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [_buildStatsCards(), _buildTransactionsList()],
+                  );
+
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: content,
               ),
-            ),
+            );
+          },
+        ),
+      ),
     );
   }
 

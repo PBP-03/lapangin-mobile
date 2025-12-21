@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import '../../config/config.dart';
 import '../../models/venue_model.dart';
 import '../../services/admin_mitra_service.dart';
+import '../../widgets/branded_app_bar.dart';
 
 class AdminMitraDetailPage extends StatefulWidget {
   final String mitraId;
@@ -20,7 +22,7 @@ class AdminMitraDetailPage extends StatefulWidget {
 
 class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
   Map<String, dynamic>? _mitraData;
-  List<VenueModel>? _venueList;
+  List<Venue>? _venueList;
   bool _isLoading = true;
   String? _errorMessage;
   Set<int> _expandedVenues = {};
@@ -174,10 +176,8 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BrandedAppBar(
         title: Text('Detail - ${widget.mitraName}'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: _buildBody(),
@@ -185,53 +185,67 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF5409DA)),
-        ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: _loadMitraVenues,
       color: const Color(0xFF5409DA),
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildMitraInfoCard(),
-            const SizedBox(height: 24),
-            if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.only(bottom: 24),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.orange.shade700),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.orange.shade900,
-                        ),
-                      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final Widget content = _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF5409DA),
                     ),
-                  ],
-                ),
-              ),
-            _buildVenueSection(),
-          ],
-        ),
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildMitraInfoCard(),
+                      const SizedBox(height: 24),
+                      if (_errorMessage != null)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 24),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.orange.shade700,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.orange.shade900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      _buildVenueSection(),
+                    ],
+                  ),
+                );
+
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: content,
+            ),
+          );
+        },
       ),
     );
   }
@@ -400,7 +414,7 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
     );
   }
 
-  Widget _buildVenueCard(VenueModel venue, int index) {
+  Widget _buildVenueCard(Venue venue, int index) {
     final isExpanded = _expandedVenues.contains(index);
 
     return Container(
@@ -483,9 +497,9 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
             ),
           ),
           // Image
-          if (venue.primaryImageUrl != null)
+          if (venue.primaryImage.isNotEmpty)
             Image.network(
-              venue.primaryImageUrl!,
+              AppConfig.buildProxyImageUrl(venue.primaryImage),
               width: double.infinity,
               height: 192,
               fit: BoxFit.cover,
@@ -500,13 +514,14 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
               children: [
                 _buildDetailRow(Icons.location_on, venue.address),
                 const SizedBox(height: 8),
-                _buildDetailRow(Icons.phone, venue.contact),
+                _buildDetailRow(Icons.phone, venue.contact ?? 'N/A'),
                 const SizedBox(height: 8),
                 _buildDetailRow(
                   Icons.sports_soccer,
                   'Jumlah Lapangan: ${venue.numberOfCourts}',
                 ),
-                if (venue.description.isNotEmpty) ...[
+                if (venue.description != null &&
+                    venue.description!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -527,7 +542,7 @@ class _AdminMitraDetailPageState extends State<AdminMitraDetailPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          venue.description,
+                          venue.description!,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade700,

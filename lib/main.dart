@@ -1,16 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'providers/user_provider.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
-import 'screens/user/user_home_page.dart';
 import 'screens/user/venue_list_page.dart';
-import 'screens/mitra/mitra_home_page.dart';
 import 'screens/admin/admin_home_page.dart';
+import 'screens/admin/admin_mitra_list_page.dart';
+import 'screens/admin/admin_earnings_list_page.dart';
+import 'widgets/bottom_nav_bar.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Ensure Indonesian locale formatting works (esp. Flutter Web).
+  Intl.defaultLocale = 'id_ID';
+  await initializeDateFormatting('id_ID');
+
   runApp(const MyApp());
+}
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+    PointerDeviceKind.unknown,
+  };
 }
 
 class MyApp extends StatelessWidget {
@@ -31,6 +54,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'LapangIN',
         debugShowCheckedModeBanner: false,
+        scrollBehavior: const AppScrollBehavior(),
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF5409DA),
@@ -39,14 +63,20 @@ class MyApp extends StatelessWidget {
           ),
           useMaterial3: true,
           fontFamily: 'Inter',
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            foregroundColor: Color(0xFF5409DA),
+          ),
         ),
         initialRoute: '/login',
         routes: {
           '/login': (context) => const LoginPage(),
           '/register': (context) => const RegisterPage(),
-          '/user/home': (context) => const UserHomePage(),
+          '/home': (context) => const MainScaffold(initialIndex: 0),
+          '/user/home': (context) => const MainScaffold(initialIndex: 0),
+          '/mitra/home': (context) => const MainScaffold(initialIndex: 0),
           '/user/venues': (context) => const VenueListPage(),
-          '/mitra/home': (context) => const MitraHomePage(),
           '/admin/home': (context) => const AdminHomePage(),
           '/admin/kelola-pengguna': (context) => const AdminMitraListPage(),
           '/admin/pendapatan-mitra': (context) => const AdminEarningsListPage(),

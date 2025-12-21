@@ -1,17 +1,22 @@
-class ApiConstants {
-  // Change this to your Django backend URL
-  // For local development:
-  // - Android emulator: 'http://10.0.2.2:8000'
-  // - iOS simulator: 'http://localhost:8000'
-  // - Physical device: 'http://YOUR_LOCAL_IP:8000' (e.g., 'http://192.168.1.100:8000')
-  // For production: 'https://your-domain.com'
+import '../config/config.dart';
 
-  static const String baseUrl = 'https://muhammad-fauzan44-lapangin.pbp.cs.ui.ac.id';
+class ApiConstants {
+  // IMPORTANT:
+  // Keep all API URLs consistent across the app.
+  // If login uses one base URL but other requests use another,
+  // session cookies won't be sent and you'll get 401.
+
+  static const String baseUrl = AppConfig.baseUrl;
 
   // API Endpoints
-  static const String loginUrl = '$baseUrl/api/login/';
-  static const String registerUrl = '$baseUrl/api/register/';
-  static const String logoutUrl = '$baseUrl/api/logout/';
-  static const String userStatusUrl = '$baseUrl/api/user-status/';
-  static const String profileUrl = '$baseUrl/api/profile/';
+  static const String loginUrl =
+      '${AppConfig.baseUrl}${AppConfig.loginEndpoint}';
+  static const String registerUrl =
+      '${AppConfig.baseUrl}${AppConfig.registerEndpoint}';
+  static const String logoutUrl =
+      '${AppConfig.baseUrl}${AppConfig.logoutEndpoint}';
+  static const String userStatusUrl =
+      '${AppConfig.baseUrl}${AppConfig.userStatusEndpoint}';
+  static const String profileUrl =
+      '${AppConfig.baseUrl}${AppConfig.profileEndpoint}';
 }

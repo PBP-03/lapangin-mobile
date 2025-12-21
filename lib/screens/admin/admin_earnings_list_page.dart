@@ -5,6 +5,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../../models/earnings_model.dart';
 import '../../services/admin_earnings_service.dart';
+import '../../widgets/branded_app_bar.dart';
 
 class AdminEarningsListPage extends StatefulWidget {
   const AdminEarningsListPage({super.key});
@@ -44,7 +45,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
     try {
       // Load earnings first
       final earnings = await _earningsService.getAllMitraEarnings();
-      
+
       // Try to load refunds, but don't fail if it errors
       List<RefundModel> refunds = [];
       try {
@@ -52,9 +53,11 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
       } catch (refundError) {
         // Silently continue with empty refunds list
         // Refunds API may not be available or return HTML error
-        debugPrint('Refunds unavailable: ${refundError.toString().substring(0, 100)}...');
+        debugPrint(
+          'Refunds unavailable: ${refundError.toString().substring(0, 100)}...',
+        );
       }
-      
+
       setState(() {
         _earnings = earnings;
         _refunds = refunds;
@@ -71,7 +74,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
 
   Future<void> _processRefund(String pendapatanId) async {
     final reasonController = TextEditingController();
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -119,25 +122,25 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
 
     if (confirmed == true && reasonController.text.trim().isNotEmpty) {
       try {
-        await _earningsService.createRefund(pendapatanId, reasonController.text.trim());
+        await _earningsService.createRefund(
+          pendapatanId,
+          reasonController.text.trim(),
+        );
         if (!mounted) return;
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Refund processed successfully!'),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         Navigator.pop(context); // Close detail modal
         _loadEarnings(); // Reload data
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -172,22 +175,19 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
       try {
         await _earningsService.cancelRefund(pendapatanId);
         if (!mounted) return;
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Refund cancelled successfully!'),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         _loadEarnings(); // Reload data
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -234,97 +234,111 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
-        title: const Text('Total Earnings Mitra'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
+      appBar: const BrandedAppBar(
+        title: Text('Total Earnings Mitra'),
         elevation: 0,
-        leading: const SizedBox.shrink(),
+        automaticallyImplyLeading: false,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? _buildErrorState()
-              : RefreshIndicator(
-                  onRefresh: _loadEarnings,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      children: [
-                        // Header Section with Title and Back Button
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(24),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            border: Border(
-                              bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+      body: RefreshIndicator(
+        onRefresh: _loadEarnings,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorMessage != null
+                    ? _buildErrorState()
+                    : Column(
+                        children: [
+                          // Header Section with Title and Back Button
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Color(0xFFE5E7EB),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Total Earnings Mitra',
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF111827),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Text(
+                                        'Monitor pendapatan seluruh mitra dan kelola refund',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pushReplacementNamed(
+                                      context,
+                                      '/admin/home',
+                                    );
+                                  },
+                                  icon: const Icon(Icons.arrow_back, size: 20),
+                                  label: const Text('Kembali ke Dashboard'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF6B7280),
+                                    side: const BorderSide(
+                                      color: Color(0xFFD1D5DB),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Total Earnings Mitra',
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF111827),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    const Text(
-                                      'Monitor pendapatan seluruh mitra dan kelola refund',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.pushReplacementNamed(context, '/admin/home');
-                                },
-                                icon: const Icon(Icons.arrow_back, size: 20),
-                                label: const Text('Kembali ke Dashboard'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF6B7280),
-                                  side: const BorderSide(color: Color(0xFFD1D5DB)),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
 
-                        const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                        // Refunds Section
-                        _buildRefundsSection(),
+                          // Refunds Section
+                          _buildRefundsSection(),
 
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                        // Earnings Section
-                        _buildEarningsSection(),
+                          // Earnings Section
+                          _buildEarningsSection(),
 
-                        const SizedBox(height: 32),
-                      ],
-                    ),
-                  ),
-                ),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -365,9 +379,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
           ),
 
           // Refunds Table or Empty State
-          _refunds.isEmpty
-              ? _buildEmptyRefundsState()
-              : _buildRefundsTable(),
+          _refunds.isEmpty ? _buildEmptyRefundsState() : _buildRefundsTable(),
         ],
       ),
     );
@@ -388,71 +400,71 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
             dataRowMaxHeight: 80,
             columnSpacing: 24,
             columns: const [
-          DataColumn(
-            label: Text(
-              'NO',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
+              DataColumn(
+                label: Text(
+                  'NO',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
               ),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'MITRA / CUSTOMER',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
+              DataColumn(
+                label: Text(
+                  'MITRA / CUSTOMER',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
               ),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'VENUE / COURT',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
+              DataColumn(
+                label: Text(
+                  'VENUE / COURT',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
               ),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'AMOUNT',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
+              DataColumn(
+                label: Text(
+                  'AMOUNT',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
               ),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'REASON',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
+              DataColumn(
+                label: Text(
+                  'REASON',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
               ),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'ACTIONS',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
+              DataColumn(
+                label: Text(
+                  'ACTIONS',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
               ),
+            ],
+            rows: List.generate(
+              _refunds.length,
+              (index) => _buildRefundRow(_refunds[index], index + 1),
             ),
-          ),
-        ],
-        rows: List.generate(
-          _refunds.length,
-          (index) => _buildRefundRow(_refunds[index], index + 1),
-        ),
           ),
         ),
       ),
@@ -483,10 +495,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
               ),
               Text(
                 refund.customerName,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -506,10 +515,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
               ),
               Text(
                 refund.courtName,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -546,10 +552,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              'Cancel Refund',
-              style: TextStyle(fontSize: 12),
-            ),
+            child: const Text('Cancel Refund', style: TextStyle(fontSize: 12)),
           ),
         ),
       ],
@@ -593,9 +596,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
           ),
 
           // Earnings Table or Empty State
-          _earnings.isEmpty
-              ? _buildEmptyState()
-              : _buildEarningsTable(),
+          _earnings.isEmpty ? _buildEmptyState() : _buildEarningsTable(),
         ],
       ),
     );
@@ -692,10 +693,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
               const SizedBox(height: 4),
               Text(
                 '${earning.completedTransactions} transaksi selesai',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -703,10 +701,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
         DataCell(
           Text(
             earning.mitraEmail,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF6B7280),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
         ),
         DataCell(
@@ -724,13 +719,11 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
               ),
               const SizedBox(height: 4),
               InkWell(
-                onTap: () => _showTransactionDetails(earning.mitraId, earning.mitraName),
+                onTap: () =>
+                    _showTransactionDetails(earning.mitraId, earning.mitraName),
                 child: const Text(
                   'Lihat Detail Transaksi →',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF5409DA),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF5409DA)),
                 ),
               ),
             ],
@@ -813,10 +806,7 @@ class _AdminEarningsListPageState extends State<AdminEarningsListPage> {
             const SizedBox(height: 8),
             const Text(
               'Refunded transactions will appear here',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6B7280),
-              ),
+              style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -966,7 +956,11 @@ class _TransactionDetailModal extends StatelessWidget {
                         children: [
                           Row(
                             children: const [
-                              Icon(Icons.person, size: 20, color: Color(0xFF5409DA)),
+                              Icon(
+                                Icons.person,
+                                size: 20,
+                                color: Color(0xFF5409DA),
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'Informasi Mitra',
@@ -989,7 +983,8 @@ class _TransactionDetailModal extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Nama',
@@ -1020,7 +1015,8 @@ class _TransactionDetailModal extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Email',
@@ -1056,7 +1052,8 @@ class _TransactionDetailModal extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Phone',
@@ -1087,7 +1084,8 @@ class _TransactionDetailModal extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Status',
@@ -1098,12 +1096,14 @@ class _TransactionDetailModal extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        detail.mitra.isVerified ? 'Verified' : 'Not Verified',
+                                        detail.mitra.isVerified
+                                            ? 'Verified'
+                                            : 'Not Verified',
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
-                                          color: detail.mitra.isVerified 
-                                              ? const Color(0xFF059669) 
+                                          color: detail.mitra.isVerified
+                                              ? const Color(0xFF059669)
                                               : const Color(0xFFD97706),
                                         ),
                                       ),
@@ -1132,13 +1132,16 @@ class _TransactionDetailModal extends StatelessWidget {
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                              border: Border.all(
+                                color: const Color(0xFFA7F3D0),
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: const [
                                     Text(
                                       'Total Earnings',
@@ -1148,12 +1151,18 @@ class _TransactionDetailModal extends StatelessWidget {
                                         color: Color(0xFF065F46),
                                       ),
                                     ),
-                                    Icon(Icons.attach_money, size: 20, color: Color(0xFF059669)),
+                                    Icon(
+                                      Icons.attach_money,
+                                      size: 20,
+                                      color: Color(0xFF059669),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  currencyFormat.format(detail.summary.totalEarnings),
+                                  currencyFormat.format(
+                                    detail.summary.totalEarnings,
+                                  ),
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -1176,13 +1185,16 @@ class _TransactionDetailModal extends StatelessWidget {
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF93C5FD)),
+                              border: Border.all(
+                                color: const Color(0xFF93C5FD),
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: const [
                                     Text(
                                       'Komisi',
@@ -1192,12 +1204,18 @@ class _TransactionDetailModal extends StatelessWidget {
                                         color: Color(0xFF1E40AF),
                                       ),
                                     ),
-                                    Icon(Icons.receipt, size: 20, color: Color(0xFF2563EB)),
+                                    Icon(
+                                      Icons.receipt,
+                                      size: 20,
+                                      color: Color(0xFF2563EB),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  currencyFormat.format(detail.summary.totalCommission),
+                                  currencyFormat.format(
+                                    detail.summary.totalCommission,
+                                  ),
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -1250,7 +1268,11 @@ class _TransactionDetailModal extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const Icon(Icons.receipt_long, size: 24, color: Color(0xFF7C3AED)),
+                          const Icon(
+                            Icons.receipt_long,
+                            size: 24,
+                            color: Color(0xFF7C3AED),
+                          ),
                         ],
                       ),
                     ),
@@ -1269,8 +1291,10 @@ class _TransactionDetailModal extends StatelessWidget {
                     const SizedBox(height: 12),
 
                     // Transactions List
-                    ...detail.transactions.map((transaction) =>
-                        _buildTransactionCard(context, transaction)),
+                    ...detail.transactions.map(
+                      (transaction) =>
+                          _buildTransactionCard(context, transaction),
+                    ),
                   ],
                 ),
               ),
@@ -1289,10 +1313,7 @@ class _TransactionDetailModal extends StatelessWidget {
           width: 120,
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF6B7280),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
         ),
         const Text(': ', style: TextStyle(color: Color(0xFF6B7280))),
@@ -1323,10 +1344,7 @@ class _TransactionDetailModal extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-            ),
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 4),
           Text(
@@ -1342,10 +1360,15 @@ class _TransactionDetailModal extends StatelessWidget {
     );
   }
 
-  Widget _buildTransactionCard(BuildContext context, TransactionModel transaction) {
+  Widget _buildTransactionCard(
+    BuildContext context,
+    TransactionModel transaction,
+  ) {
     final bookingDate = DateTime.tryParse(transaction.bookingDate);
-    final paidDate = transaction.paidAt != null ? DateTime.tryParse(transaction.paidAt!) : null;
-    
+    final paidDate = transaction.paidAt != null
+        ? DateTime.tryParse(transaction.paidAt!)
+        : null;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -1386,7 +1409,10 @@ class _TransactionDetailModal extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFDCEAFF),
                             borderRadius: BorderRadius.circular(4),
@@ -1406,7 +1432,11 @@ class _TransactionDetailModal extends StatelessWidget {
                     // Customer info
                     Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: Color(0xFF9CA3AF)),
+                        const Icon(
+                          Icons.person_outline,
+                          size: 14,
+                          color: Color(0xFF9CA3AF),
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Pelanggan: ${transaction.customerName}',
@@ -1421,7 +1451,11 @@ class _TransactionDetailModal extends StatelessWidget {
                     // Date and time
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 14, color: Color(0xFF9CA3AF)),
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 14,
+                          color: Color(0xFF9CA3AF),
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           bookingDate != null
@@ -1438,7 +1472,11 @@ class _TransactionDetailModal extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.check_circle_outline, size: 14, color: Color(0xFF9CA3AF)),
+                          const Icon(
+                            Icons.check_circle_outline,
+                            size: 14,
+                            color: Color(0xFF9CA3AF),
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'Dibayar: ${DateFormat('dd/MM/yyyy HH:mm', 'id_ID').format(paidDate)}',
@@ -1460,10 +1498,7 @@ class _TransactionDetailModal extends StatelessWidget {
                 children: [
                   const Text(
                     'Total',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFF6B7280),
-                    ),
+                    style: TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -1509,7 +1544,10 @@ class _TransactionDetailModal extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(6),
@@ -1533,7 +1571,10 @@ class _TransactionDetailModal extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFEE2E2),
                   foregroundColor: const Color(0xFFDC2626),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

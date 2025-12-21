@@ -1,9 +1,10 @@
-import 'dart:ui';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../constants/api_constants.dart';
+import '../constants/app_theme.dart';
+import '../widgets/app_logo.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -136,29 +137,25 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF5409DA), // primary-600
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo and Welcome Text
-                  _buildHeader(),
-                  const SizedBox(height: 40),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo and Welcome Text
+                _buildHeader(),
+                // const SizedBox(height: 32),
 
-                  // Register Form Card
-                  _buildRegisterCard(),
-                  const SizedBox(height: 24),
+                // Register Form Card
+                _buildRegisterCard(),
+                const SizedBox(height: 20),
 
-                  // Login Link
-                  _buildLoginLink(),
-                ],
-              ),
+                // Login Link
+                _buildLoginLink(),
+              ],
             ),
           ),
         ),
@@ -169,34 +166,26 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Logo/Icon
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
-          ),
-          child: const Icon(Icons.sports_soccer, size: 48, color: Colors.white),
+        const Center(
+          child: AppLogo(size: 250, fallbackColor: AppColors.primary),
         ),
-        const SizedBox(height: 24),
+        // const SizedBox(height: 16),
 
         // Welcome Text
-        const Text(
-          'Create Account',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Sign up to start booking your favorite courts',
-          style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.9)),
-          textAlign: TextAlign.center,
-        ),
+        // const Text(
+        //   'Create Account',
+        //   style: TextStyle(
+        //     fontSize: 32,
+        //     fontWeight: FontWeight.bold,
+        //     color: AppColors.primary,
+        //   ),
+        // ),
+        // const SizedBox(height: 8),
+        // Text(
+        //   'Sign up to start booking your favorite courts',
+        //   style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+        //   textAlign: TextAlign.center,
+        // ),
       ],
     );
   }
@@ -633,21 +622,21 @@ class _RegisterPageState extends State<RegisterPage> {
       children: [
         Text(
           "Already have an account? ",
-          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+          style: TextStyle(color: AppColors.primary, fontSize: 14),
         ),
         TextButton(
           onPressed: () {
             Navigator.pop(context);
           },
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-          ),
+          // style: TextButton.styleFrom(
+          //   padding: const EdgeInsets.symmetric(horizontal: 4),
+          // ),
           child: const Text(
             'Login',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.primary,
               fontSize: 14,
-              fontWeight: FontWeight.bold,
+              // fontWeight: FontWeight.bold,
               decoration: TextDecoration.underline,
             ),
           ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class LapanganFormPage extends StatefulWidget {
   final Map<String, dynamic>? lapangan; // For editing
@@ -52,6 +53,7 @@ class _LapanganFormPageState extends State<LapanganFormPage> {
       final response = await request.get('${ApiConstants.baseUrl}/api/venues/');
 
       if (response['success'] == true) {
+        if (!mounted) return;
         setState(() {
           _venues = (response['data'] as List).map((venue) {
             return {'id': venue['id'], 'name': venue['name']};
@@ -64,7 +66,7 @@ class _LapanganFormPageState extends State<LapanganFormPage> {
         });
       }
     } catch (e) {
-      print('❌ Error loading venues: $e');
+      if (!mounted) return;
       setState(() => _isLoadingVenues = false);
     }
   }
@@ -142,8 +144,6 @@ class _LapanganFormPageState extends State<LapanganFormPage> {
         'image_urls': jsonEncode(imageUrls), // Django expects JSON string
       };
 
-      print('🔍 Sending data: $data'); // Debug log
-
       dynamic response;
       if (widget.lapangan != null) {
         // Edit mode - add method override
@@ -159,8 +159,6 @@ class _LapanganFormPageState extends State<LapanganFormPage> {
           data,
         );
       }
-
-      print('🔍 Response: $response'); // Debug log
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -195,7 +193,6 @@ class _LapanganFormPageState extends State<LapanganFormPage> {
         }
       }
     } catch (e) {
-      print('❌ Error: $e'); // Debug log
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -228,12 +225,10 @@ class _LapanganFormPageState extends State<LapanganFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BrandedAppBar(
         title: Text(
           widget.lapangan != null ? 'Edit Lapangan' : 'Tambah Lapangan',
         ),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
       ),
       body: _isLoadingVenues
           ? const Center(child: CircularProgressIndicator())

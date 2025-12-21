@@ -1,10 +1,11 @@
-﻿import 'dart:ui';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import '../constants/app_theme.dart';
 import '../models/user_model.dart';
 import '../providers/user_provider.dart';
 import '../services/auth_service.dart';
+import '../widgets/app_logo.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -100,29 +101,25 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF5409DA), // primary-600
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo and Welcome Text
-                  _buildHeader(),
-                  const SizedBox(height: 48),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo and Welcome Text
+                _buildHeader(),
+                // const SizedBox(height: 40),
 
-                  // Login Form Card
-                  _buildLoginCard(),
-                  const SizedBox(height: 24),
+                // Login Form Card
+                _buildLoginCard(),
+                const SizedBox(height: 20),
 
-                  // Register Link
-                  _buildRegisterLink(),
-                ],
-              ),
+                // Register Link
+                _buildRegisterLink(),
+              ],
             ),
           ),
         ),
@@ -133,32 +130,8 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // Logo/Icon
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
-          ),
-          child: const Icon(Icons.sports_soccer, size: 48, color: Colors.white),
-        ),
-        const SizedBox(height: 24),
-
-        // Welcome Text
-        const Text(
-          'Welcome Back!',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Login to continue to LapangIN',
-          style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.9)),
+        const Center(
+          child: AppLogo(size: 250, fallbackColor: AppColors.primary),
         ),
       ],
     );
@@ -363,7 +336,7 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         Text(
           "Don't have an account? ",
-          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+          style: TextStyle(color: AppColors.primary, fontSize: 14),
         ),
         TextButton(
           onPressed: () {
@@ -375,9 +348,9 @@ class _LoginPageState extends State<LoginPage> {
           child: const Text(
             'Register Now',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.primary,
               fontSize: 14,
-              fontWeight: FontWeight.bold,
+              // fontWeight: FontWeight.bold,
               decoration: TextDecoration.underline,
             ),
           ),

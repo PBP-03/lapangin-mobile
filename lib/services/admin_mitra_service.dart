@@ -39,7 +39,7 @@ class AdminMitraService {
         return {
           'mitra': mitra,
           'venues': venuesList
-              .map((json) => VenueModel.fromJson(json))
+              .map((json) => Venue.fromJson(json))
               .toList(),
         };
       } else {

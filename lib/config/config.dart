@@ -22,7 +22,8 @@ class AppConfig {
   static const String courtsEndpoint = '/api/courts/';
 
   // Bookings
-  static const String bookingsEndpoint = '/api/bookings/';
+  static const String bookingsEndpoint = '/bookings/history/';
+  static const String bookingCreateEndpoint = '/bookings/create/';
 
   // Reviews
   static const String reviewsEndpoint = '/api/venues/';
@@ -40,5 +41,13 @@ class AppConfig {
   // Build full URL
   static String buildUrl(String endpoint) {
     return '$baseUrl$endpoint';
+  }
+
+  // Build proxy image URL
+  static String buildProxyImageUrl(String imageUrl) {
+    if (imageUrl.isEmpty) return '';
+    // Encode the image URL to pass it as a query parameter
+    final encodedUrl = Uri.encodeComponent(imageUrl);
+    return '$baseUrl/api/proxy-image/?url=$encodedUrl';
   }
 }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/branded_app_bar.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -41,10 +42,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
+      appBar: BrandedAppBar(
         title: const Text('Dashboard Admin'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
@@ -62,72 +61,81 @@ class _AdminHomePageState extends State<AdminHomePage> {
           ),
         ],
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _dashboardData,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError ||
-              !snapshot.hasData ||
-              snapshot.data!['success'] != true) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    snapshot.data?['message'] ?? 'Failed to load data',
-                    style: const TextStyle(fontSize: 16, color: Colors.red),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadDashboardData,
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final data = snapshot.data!['data'];
-          final statistics = data['statistics'] ?? {};
-          final recentActivities = data['recent_activities'] ?? [];
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              _loadDashboardData();
-              await _dashboardData;
-            },
-            child: SingleChildScrollView(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _loadDashboardData();
+          await _dashboardData;
+        },
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Welcome Section
-                    _buildWelcomeSection(userProvider),
-                    const SizedBox(height: 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: FutureBuilder<Map<String, dynamic>>(
+                  future: _dashboardData,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                    // Statistics Cards
-                    _buildStatisticsGrid(statistics),
-                    const SizedBox(height: 24),
+                    if (snapshot.hasError ||
+                        !snapshot.hasData ||
+                        snapshot.data!['success'] != true) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              snapshot.data?['message'] ??
+                                  'Failed to load data',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.red,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadDashboardData,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
 
-                    // Quick Actions
-                    _buildQuickActions(),
-                    const SizedBox(height: 24),
+                    final data = snapshot.data!['data'];
+                    final statistics = data['statistics'] ?? {};
+                    final recentActivities = data['recent_activities'] ?? [];
 
-                    // Recent Activities
-                    _buildRecentActivities(recentActivities),
-                  ],
+                    return Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildWelcomeSection(userProvider),
+                          const SizedBox(height: 24),
+                          _buildStatisticsGrid(statistics),
+                          const SizedBox(height: 24),
+                          _buildQuickActions(),
+                          const SizedBox(height: 24),
+                          _buildRecentActivities(recentActivities),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

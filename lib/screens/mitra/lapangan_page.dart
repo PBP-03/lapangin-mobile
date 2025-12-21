@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:lapangin_mobile/config/config.dart';
 import 'package:lapangin_mobile/constants/api_constants.dart';
 import 'package:lapangin_mobile/screens/mitra/lapangan_form_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:lapangin_mobile/widgets/branded_app_bar.dart';
 
 class LapanganPage extends StatefulWidget {
   const LapanganPage({super.key});
@@ -70,6 +72,12 @@ class _LapanganPageState extends State<LapanganPage> {
     _loadLapangan();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadVenues() async {
     try {
       final request = context.read<CookieRequest>();
@@ -84,9 +92,7 @@ class _LapanganPageState extends State<LapanganPage> {
           });
         }
       }
-    } catch (e) {
-      print('❌ Error loading venues: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> _loadLapangan() async {
@@ -124,12 +130,10 @@ class _LapanganPageState extends State<LapanganPage> {
             _isLoading = false;
           });
         }
-        print('✅ Loaded ${_lapangan.length} courts from API');
       } else {
         throw Exception(response['message'] ?? 'Failed to load courts');
       }
     } catch (e) {
-      print('❌ Error loading lapangan: $e');
       if (mounted) {
         setState(() {
           _lapangan = [];
@@ -173,6 +177,7 @@ class _LapanganPageState extends State<LapanganPage> {
         if (response['success'] == true) {
           if (mounted) {
             await _loadLapangan();
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Lapangan berhasil dihapus'),
@@ -194,20 +199,45 @@ class _LapanganPageState extends State<LapanganPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kelola Lapangan'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
-      ),
+      appBar: const BrandedAppBar(title: Text('Kelola Lapangan')),
       body: Column(
         children: [
           _buildFilterBar(),
           Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredLapangan.isEmpty
-                ? _buildEmptyState()
-                : _buildLapanganList(),
+            child: RefreshIndicator(
+              onRefresh: _loadLapangan,
+              child: _isLoading
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : _filteredLapangan.isEmpty
+                  ? LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: _buildEmptyState(),
+                          ),
+                        );
+                      },
+                    )
+                  : _buildLapanganList(),
+            ),
           ),
         ],
       ),
@@ -351,6 +381,7 @@ class _LapanganPageState extends State<LapanganPage> {
 
   Widget _buildLapanganList() {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: _filteredLapangan.length,
       itemBuilder: (context, index) {
@@ -385,7 +416,7 @@ class _LapanganPageState extends State<LapanganPage> {
                     imageUrl.isNotEmpty &&
                         imageUrl != 'https://via.placeholder.com/400x300'
                     ? Image.network(
-                        imageUrl,
+                        AppConfig.buildProxyImageUrl(imageUrl),
                         height: 180,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -653,6 +684,7 @@ class _LapanganPageState extends State<LapanganPage> {
 
     // Load sessions
     List<Map<String, dynamic>> sessions = [];
+    String? loadError;
     try {
       final response = await request.get(
         '${ApiConstants.baseUrl}/api/courts/${court['id']}/sessions/',
@@ -662,19 +694,21 @@ class _LapanganPageState extends State<LapanganPage> {
         sessions = (response['data'] as List)
             .map((session) => Map<String, dynamic>.from(session))
             .toList();
-        print('Initial sessions loaded: $sessions');
-        print('Court price_per_hour: ${court['price_per_hour']}');
-        print('Court object keys: ${court.keys}');
-        if (sessions.isNotEmpty) {
-          print('First session price: ${sessions[0]['price']}');
-          print('First session keys: ${sessions[0].keys}');
-        }
       }
     } catch (e) {
-      print('Error loading sessions: $e');
+      loadError = e.toString();
     }
 
     if (!mounted) return;
+
+    if (loadError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal memuat jadwal: $loadError'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
 
     // Capture class members before entering dialog context
     final daysOfWeek = _daysOfWeek;
@@ -772,7 +806,7 @@ class _LapanganPageState extends State<LapanganPage> {
                                 });
                               }
                             } catch (e) {
-                              print('Error reloading: $e');
+                              // Ignore reload error; dialog can be refreshed later.
                             }
                           },
                           tooltip: 'Tambah Jadwal',
@@ -936,9 +970,6 @@ class _LapanganPageState extends State<LapanganPage> {
                                                       );
                                                   if (response['success'] ==
                                                       true) {
-                                                    print(
-                                                      'Sessions after edit reload: ${response['data']}',
-                                                    );
                                                     setDialogState(() {
                                                       sessions =
                                                           (response['data']
@@ -954,9 +985,7 @@ class _LapanganPageState extends State<LapanganPage> {
                                                     });
                                                   }
                                                 } catch (e) {
-                                                  print(
-                                                    'Error reloading after edit: $e',
-                                                  );
+                                                  // Ignore reload error; dialog can be refreshed later.
                                                 }
                                               },
                                             ),
@@ -996,7 +1025,7 @@ class _LapanganPageState extends State<LapanganPage> {
                                                     });
                                                   }
                                                 } catch (e) {
-                                                  print('Error: $e');
+                                                  // Ignore reload error; dialog can be refreshed later.
                                                 }
                                               },
                                             ),
@@ -1132,6 +1161,7 @@ class _LapanganPageState extends State<LapanganPage> {
                   );
 
                   if (response['success'] == true) {
+                    if (!mounted) return;
                     Navigator.pop(context);
                     ScaffoldMessenger.of(parentContext).showSnackBar(
                       const SnackBar(
@@ -1267,6 +1297,7 @@ class _LapanganPageState extends State<LapanganPage> {
                   );
 
                   if (response['success'] == true) {
+                    if (!mounted) return;
                     Navigator.pop(context);
                     ScaffoldMessenger.of(parentContext).showSnackBar(
                       const SnackBar(
@@ -1337,6 +1368,7 @@ class _LapanganPageState extends State<LapanganPage> {
         );
 
         if (response['success'] == true) {
+          if (!mounted) return;
           ScaffoldMessenger.of(parentContext).showSnackBar(
             const SnackBar(
               content: Text('Jadwal berhasil dihapus'),
@@ -1347,6 +1379,7 @@ class _LapanganPageState extends State<LapanganPage> {
           throw Exception(response['message'] ?? 'Failed to delete session');
         }
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(parentContext).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );

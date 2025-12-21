@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import 'branded_app_bar.dart';
 
-/// Temporary Role Selector Widget
-/// This widget allows developers/testers to quickly navigate to different role dashboards
-/// TODO: Remove this widget in production
 class RoleSelectorPage extends StatelessWidget {
   const RoleSelectorPage({super.key});
 
@@ -13,10 +11,8 @@ class RoleSelectorPage extends StatelessWidget {
     final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Role (Development Only)'),
-        backgroundColor: const Color(0xFF5409DA),
-        foregroundColor: Colors.white,
+      appBar: const BrandedAppBar(
+        title: Text('Select Role (Development Only)'),
       ),
       body: Container(
         decoration: BoxDecoration(
